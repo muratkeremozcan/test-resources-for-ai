@@ -1,0 +1,5112 @@
+Directory structure:
+└── muratkeremozcan-pact-js-example-consumer/
+    ├── README.md
+    ├── jest-pact.config.ts
+    ├── jest.config.ts
+    ├── package.json
+    ├── renovate.json
+    ├── tsconfig.jest.json
+    ├── tsconfig.json
+    ├── .env.example
+    ├── .eslintignore
+    ├── .eslintrc.js
+    ├── .npmrc
+    ├── .nvmrc
+    ├── .prettierrc
+    ├── cypress/
+    │   ├── index.ts
+    │   ├── tsconfig.json
+    │   ├── config/
+    │   │   ├── base.config.ts
+    │   │   └── local.config.ts
+    │   ├── e2e/
+    │   │   ├── crud-movie-event.cy.ts
+    │   │   └── crud-movie.cy.ts
+    │   ├── fixtures/
+    │   │   └── example.json
+    │   └── support/
+    │       ├── commands.ts
+    │       ├── e2e.ts
+    │       ├── esbuild-preprocessor.ts
+    │       ├── factories.ts
+    │       ├── log.ts
+    │       ├── parse-kafka-event.ts
+    │       ├── plugins.ts
+    │       ├── retryable-before.ts
+    │       └── tasks.ts
+    ├── mockoon/
+    │   └── provider-mock.json
+    ├── pw/
+    │   ├── config/
+    │   │   ├── base.config.ts
+    │   │   └── playwright-local.config.ts
+    │   ├── e2e/
+    │   │   ├── crud-movie-event.spec.ts
+    │   │   └── crud-movie.spec.ts
+    │   └── support/
+    │       ├── fixtures.ts
+    │       ├── parse-kafka-event.ts
+    │       ├── fixture-helpers/
+    │       │   └── plain-functions.ts
+    │       ├── fixtures/
+    │       │   └── api-request-fixture.ts
+    │       └── utils/
+    │           ├── recurse-with-expect.ts
+    │           └── run-command.ts
+    ├── scripts/
+    │   ├── can-i-deploy-consumer.sh
+    │   ├── env-setup.sh
+    │   ├── publish-pact.sh
+    │   └── record-consumer-deployment.sh
+    ├── src/
+    │   ├── consumer-contract.pacttest.ts
+    │   ├── consumer-kafka.pacttest.ts
+    │   ├── consumer.test.ts
+    │   ├── consumer.ts
+    │   ├── events/
+    │   │   ├── events-listen.ts
+    │   │   ├── log-file-path.ts
+    │   │   ├── movie-event-types.ts
+    │   │   └── movie-events.ts
+    │   ├── provider-schema/
+    │   │   ├── movie-types.ts
+    │   │   └── schema.ts
+    │   └── test-helpers/
+    │       └── helpers.ts
+    ├── tests-examples/
+    │   └── demo-todo-app.spec.ts
+    └── .github/
+        ├── PULL_REQUEST_TEMPLATE.md
+        └── workflows/
+            ├── contract-test.yml
+            ├── e2e-test-cy.yml
+            ├── e2e-test-pw.yml
+            ├── merge-gatekeeper.yml
+            └── pr-checks.yml
+
+================================================
+FILE: README.md
+================================================
+# PactJS Contract Testing Example
+
+![@pact-foundation/pact version](https://img.shields.io/badge/@pact--foundation/pact-12.1.0-brightgreen) ![jest version](https://img.shields.io/badge/jest-29.7.0-brightgreen) ![cypress version](https://img.shields.io/badge/cypress-13.14.1-brightgreen)
+
+![Pact Status](https://ozcan.pactflow.io/pacts/provider/MoviesAPI/consumer/WebConsumer/latest/badge.svg)
+
+![Can I Deploy?](https://ozcan.pactflow.io/pacticipants/WebConsumer/branches/main/latest-version/can-i-deploy/to-environment/dev/badge.svg)
+
+An example test framework using Pact-js to validate contract testing between consumer and provider. The application that we are testing is a simple movies API that returns a list of movies.
+
+The biggest selling point of Consumer Driven Contract Testing (CDCT) in simple terms is the entities do not have to be in a common deployment; the contract / pact / json file instead binds them together. Which means we can work on the consumer in isolation, we can work on the provider in isolation, and we can test their integration without having to have them both running on the same machine or the same deployment.
+
+Provider service: https://github.com/muratkeremozcan/pact-js-example-provider
+
+Consumer service: https://github.com/muratkeremozcan/pact-js-example-consumer
+
+React consumer app for bi-directional contract testing: https://github.com/muratkeremozcan/pact-js-example-react-consumer
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/8qjfdsunkrdncqrcy3sw.png)
+
+- [PactJS Contract Testing Example](#pactjs-contract-testing-example)
+  - [Setup](#setup)
+    - [Webhook setup](#webhook-setup)
+    - [Consumer flow](#consumer-flow)
+    - [Provider flow](#provider-flow)
+    - [Other scripts on both sides](#other-scripts-on-both-sides)
+      - [Consumer specific scripts](#consumer-specific-scripts)
+      - [Provider specific scripts](#provider-specific-scripts)
+      - [Provider selective testing](#provider-selective-testing)
+      - [Handling Breaking Changes](#handling-breaking-changes)
+      - [Breaking change - consumer flow](#breaking-change---consumer-flow)
+      - [Breaking change - provider flow](#breaking-change---provider-flow)
+  - [Consumer Tests](#consumer-tests)
+  - [Provider Tests](#provider-tests)
+    - [Execution](#execution)
+  - [Message queue consumer tests in short](#message-queue-consumer-tests-in-short)
+  - [Message queue provider tests in short](#message-queue-provider-tests-in-short)
+    - [Execution (Same as traditional CDCT)](#execution-same-as-traditional-cdct)
+  - [Can I Deploy?](#can-i-deploy)
+  - [Record Deployments](#record-deployments)
+  - [Webhooks](#webhooks)
+  - [Nuances of the env vars \& scripts](#nuances-of-the-env-vars--scripts)
+    - [Why `GITHUB_SHA` and `GITHUB_BRANCH`?](#why-github_sha-and-github_branch)
+    - [What is the Pact Matrix?](#what-is-the-pact-matrix)
+
+## Setup
+
+```bash
+npm i
+```
+
+We are using [Pactflow](https://pactflow.io/) as our broker. To use Pactflow, register for their free developer plan.
+
+Use the sample `.env.example` file to create a `.env` file of your own. These values will also have to exist in your CI secrets.
+
+```bash
+# create a free pact broker at
+# https://pactflow.io/try-for-free/
+PACT_BROKER_TOKEN=***********
+PACT_BROKER_BASE_URL=https://yourownorg.pactflow.io
+SERVERPORT=3001 # aka pact provider / event producer / mockoon
+CLIENTPORT=3000 # self aka pact consumer / event consumer
+```
+
+### Webhook setup
+
+1. [Create a GitHub personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the public_repo access granted.
+
+   You can test your GitHub token like so (change your repo url):
+
+   ```bash
+   curl -X POST https://api.github.com/repos/muratkeremozcan/pact-js-example-provider/issues \
+       -H "Accept: application/vnd.github.v3+json" \
+       -H "Authorization: Bearer your github token" \
+       -d '{"title": "Test issue", "body": "This is a test issue created via API."}'
+   ```
+
+2. Add the GitHub token to PactFlow (Settings>Secrets>Add Secret, name it `githubToken`).
+
+3. Create the Pact web hook (Settings>Webhooks>Add Webhook).
+
+   > There are no values under Authentication section.
+
+![Image description](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/be9ywm042qtxj9i5h6nu.png)
+
+Alternatively, use the CLI to add the webhook.
+First [install pact broker](https://github.com/pact-foundation/pact-ruby-standalone/releases), run the below while setting your PACT_BROKER_TOKEN (.env file) and your Github token (Github UI).
+
+```bash
+PACT_BROKER_BASE_URL=https://ozcan.pactflow.io \
+PACT_BROKER_TOKEN=yourPactFlowToken \
+
+pact-broker create-webhook https://api.github.com/repos/muratkeremozcan/pact-js-example-provider/dispatches \
+        --request=POST \
+        --header 'Content-Type: application/json' \
+        --header 'Accept: application/vnd.github.everest-preview+json' \
+        --header 'Authorization: Bearer yourGithubToken' \
+        --data '{
+            "event_type": "contract_requiring_verification_published",
+            "client_payload": {
+                "pact_url": "${pactbroker.pactUrl}",
+                "sha": "${pactbroker.providerVersionNumber}",
+                "branch": "${pactbroker.providerVersionBranch}",
+                "message": "Verify changed pact for ${pactbroker.consumerName} version ${pactbroker.consumerVersionNumber} branch ${pactbroker.consumerVersionBranch} by ${pactbroker.providerVersionNumber} (${pactbroker.providerVersionDescriptions})"
+            }
+        }'  \
+        --broker-base-url=$PACT_BROKER_BASE_URL \
+        --broker-token=$PACT_BROKER_TOKEN \
+        --consumer=WebConsumer \
+        --provider=MoviesAPI \
+        --description 'Webhook for MoviesAPI provider' \
+        --contract-requiring-verification-published
+```
+
+### Consumer flow
+
+The numbers indicate the order the commands should occur when running them locally.
+
+> For CI, check out the Webhooks section below.
+
+```bash
+npm run test:consumer # (1)
+npm run publish:pact  # (2)
+npm run can:i:deploy:consumer # (4)
+# only on main
+npm run record:consumer:deployment --env=dev # (5) change the env param as needed
+```
+
+### Provider flow
+
+```bash
+# start the provider service and run the tests
+# npm run start #
+# npm run test:provider #
+npm run test:provider:ci # (3) # starts the provider service and runs the tests
+npm run can:i:deploy:provider # (5)
+# only on main
+npm run record:provider:deployment --env=dev # (5) change the env param as needed
+```
+
+### Other scripts on both sides
+
+```bash
+npm run lint
+npm run typecheck
+npm run fix:format
+npm run validate # all the above in parallel
+
+npm run test # unit tests
+npm run test:watch # watch mode
+
+npm run cy:open-local # open mode
+npm run cy:run-local  # run mode
+npm run cy:run-local-fast  # no video or screen shots
+
+# PW scripts
+npm run pw:open-local       # open mode (local config)
+npm run pw:open-local-debug # open with debug (local config)
+
+npm run pw:run-local        # run mode (local config)
+npm run pw:run-local-debug  # run with debug (local config)
+
+npm run pw:trace            # inspect a trace.zip file
+npm run pw:clear            # remove all temporary PW files
+
+```
+
+#### Consumer specific scripts
+
+To exercise the e2e of the consumer side, we need a running backend.
+Specify the SERVERPORT env var accordingly with your backend's port.
+
+```bash
+npm run mock:server # starts the mock backend/provider server
+npm start # only used to demo kafka events on the consumer side
+```
+
+#### Provider specific scripts
+
+Using Kafka and Docker is optional. The Kafka version of the CRUD e2e test checks whether Kafka events are being written to a file, in addition to the standard CRUD operations. This test will only run if Docker is started and the Kafka UI is available. Therefore, make sure to start Docker (e.g., Docker Desktop) before executing the `kafka:start` script and the e2e test `crud-movie-event.cy.ts`.
+
+````bash
+npm run kafka:start # start Docker first, and then run this
+npm run kafka:stop # to stop when we are done
+
+
+```bash
+# these 2 run as a part of start, and reset the db
+# you usually don't have to use them
+npm run db:migrate
+npm run reset:db
+
+npm run optic:lint # verifies the OpenAPI doc
+npm run optic:diff # compares the OpenAPI on the PR to main, to find breaking changes
+npm run optic:verify # executes the e2e against the OpenAPI doc to gain API coverage and validate it
+npm run optic:update # executes the e2e, and interactively update the OpenAPI doc
+npm run optic:verify-ci # the above, but it also starts the server, in case you're not running it on the side
+
+npm run generate:openapi # generates an OpenAPI doc from Zod schemas
+npm run publish:pact-openapi # publishes the open api spec to Pact Broker for BDCT
+npm run record:provider:bidirectional:deployment --env=dev # records the bi-directional provider deployment
+````
+
+#### Provider selective testing
+
+By default, Pact provider tests run against all consumers and their respective contracts, which can make it difficult to debug specific issues. To narrow down the scope and run selective tests, you can filter by specific consumer or use Pact selectors to focus on certain interactions or states.
+
+Refer to the [Pact JS Troubleshooting Guide](https://docs.pact.io/implementation_guides/javascript/docs/troubleshooting) for more details.
+
+You can use the following environment variables to select specific interactions or states:
+
+- `PACT_DESCRIPTION`: Selects all tests containing this string in their description (from the test output or the pact file).
+- `PACT_PROVIDER_STATE`: Selects all tests containing this string in one of their provider states.
+- `PACT_PROVIDER_NO_STATE`: Set to `TRUE` to select all tests without provider states.
+
+```bash
+PACT_DESCRIPTION="a request to get all movies" npm run test:provider
+
+PACT_DESCRIPTION="a request to get all movies" PACT_PROVIDER_STATE="An existing movie exists" npm run test:provider
+
+PACT_PROVIDER_STATE="Has a movie with a specific ID" npm run test:provider
+
+PACT_DESCRIPTION="a request to a specific movie" PACT_PROVIDER_STATE="Has a movie with a specific ID" npm run test:provider
+
+PACT_DESCRIPTION="a request to delete a movie that exists" PACT_PROVIDER_STATE="Has a movie with a specific ID" npm run test:provider
+
+PACT_PROVIDER_NO_STATE=true npm run test:provider
+```
+
+To run tests from a certain consumer:
+
+```bash
+PACT_CONSUMER="WebConsumer" npm run test:provider
+```
+
+#### Handling Breaking Changes
+
+When verifying consumer tests, we use the following default settings:
+
+- `matchingBranch`: Tests against the consumer branch that matches the provider's branch.
+- `mainBranch`: Tests against the consumer's main branch.
+- `deployedOrReleased`: Tests against the consumer's currently deployed or released versions.
+
+For **breaking changes** introduced on the provider side, you may want to verify only against matching branches, avoiding failures caused by incompatible versions in `mainBranch` or `deployedOrReleased`.
+
+To handle this scenario, use the `PACT_BREAKING_CHANGE` environment variable:
+
+```bash
+PACT_BREAKING_CHANGE=true npm run test:provider
+```
+
+In CI, you can enable this behavior by including a checkbox in the PR description. If the box is unchecked or not included, the `PACT_BREAKING_CHANGE` variable is set to `false`.
+
+```readme
+- [x] Pact breaking change
+```
+
+#### Breaking change - consumer flow
+
+```bash
+# (2) UPDATE the consumer test
+npm run test:consumer # (2) execute it
+npm run publish:pact  # (3) publish the pact
+npm run can:i:deploy:consumer # (6)
+# only on main
+npm run record:consumer:deployment --env=dev # (7)
+```
+
+#### Breaking change - provider flow
+
+```bash
+# (1) create a branch with the breaking (source code) change
+PACT_BREAKING_CHANGE=true npm run test:provider-ci # (4) start the provider service and run the tests
+# note: can:i:deploy:provider is skipped because we are introducing the breaking change
+# (5) merge to main
+```
+
+## Consumer Tests
+
+Here is how it works:
+
+1. Write the consumer test.
+
+2. Execute the and generate a contract / pact / json file.
+
+   The contract specifies how the provider should respond upon receiving requests from the consumer.
+
+3. Once the contract is created, from then on the Pact `mockProvider` takes over as if we are locally serving the provider API and executing the tests against that.
+   That means, there is no need to serve the client api or the provider api at the moment, the consumer tests and `mockProvider` cover that interaction.
+
+4. The consumer test can only fail at the `executeTest` portion, if / when the assertions do not match the specifications. Any changes to the `provider` section makes updates to the contract.
+
+Here's how a test generally looks:
+
+```js
+// consumer test
+
+it('...', () => {
+  await pact
+    // simulate/specify how the provider should respond
+    .addInteraction(...)
+    .given(some state name) // optional
+    .uponReceiving(<the name of the test>)
+    .withRequest(http verb, path)
+    .willRespondWith({ this is the meat and bones of the response })
+
+    .executeTest(async(mockProvider) => {
+    // call the source code &
+    // make assertions against the mockProvider/contract
+  })
+})
+```
+
+Run the consumer tests:
+
+```bash
+npm run test:consumer
+```
+
+The pact gets recorded, the consumer tests (`executeTest`) are verified against the contract.
+
+Now, for the provider to know about it all, we need to publish the contract
+
+Publish the contract to your Pact Broker:
+
+```bash
+npm run publish:pact
+```
+
+## Provider Tests
+
+The main goal is to verify that the provider API can fulfill the contract expectations defined by the consumer(s). This ensures that any changes made to the provider won't break existing consumer integrations.
+
+Here is how it works
+
+1. The consumer already generated the contract and published it.
+2. The provider has one test per consumer to ensure all is satisfactory. Most of the file is about setting up the options.
+3. We ensure that the provider api is running locally.
+4. The consumer tests execute against the provider api, as if they are a regular API client running locally.
+
+Here is how the test generally looks:
+
+```js
+const options = {..} // most the work is here (ex: provider states)
+const verifier = new Verifier(options)
+
+it('should validate the expectations..', () => {
+  return verifier.verifyProvider().then((output) => {
+    console.log('Pact Verification Complete!')
+    console.log('Result:', output)
+  })
+})
+```
+
+#### Execution
+
+Run the Movies API:
+
+```bash
+npm run start
+```
+
+> The provider API has to be running locally for the provider tests to be executed.
+
+Run the provider test:
+
+```bash
+npm run test:provider
+```
+
+Two in one:
+
+```bash
+npm run test:provider:ci
+```
+
+**Provider States**: We can simulate certain states of the api (like an empty or non-empty db) in order to cover different scenarios
+
+- Provider states help maintain the correct data setup before verification.
+- State handlers must match the provider states defined in consumer tests.
+
+## Message queue consumer tests in short
+
+1. Write the consumer test.
+
+   Message q consumer test: **simulates receiving a message from the queue**.
+
+   Traditional consumer test: **simulates receiving a response from the provider**.
+
+2. Execute the and generate a contract / pact / json file. (same)
+
+   The message queue contract **specifies the expected structure of the message from the producer.**
+
+   Traditional consumer test contract **specifies the expected structure of the response from the provider**.
+
+3. Once the contract is created, Pact `mockProducer` takes over as if we are locally pushing messages to the queue (`expectsToReceive`) and verifying the message agains our src code event-message-consumer-handler.
+
+   This is similar to traditional consumer test where the `mockProvider` takes over as if we are locally serving the provider API and executing the tests against that.
+
+4. The test can fail at the `verify` portion, if / when the simulated message does not match our src code event-message-consumer.
+
+Here is a contract test vs message queue test side by side:
+
+```typescript
+// message queue consumer test
+
+it('...', () => {
+  await messagePact
+    // simulate/specify the expected message
+    .expectsToReceive('some text for event name')
+    .withContent({ this is the meat and bones of the event })
+    .withMetaData({ contentType: 'application/json' })
+
+    // feed the message into the event consumer
+    .verify(asynchronousBodyHandler(yourEventConsumerHandler))
+  })
+})
+```
+
+```typescript
+// consumer test
+
+it('...', () => {
+  await pact
+    // simulate/specify how the provider should respond
+    .addInteraction(...)
+    .given(some state name) // optional
+    .uponReceiving(<the name of the test>)
+    .withRequest(http verb, path)
+    .willRespondWith({ this is the meat and bones of the response })
+
+    .executeTest(async(mockProvider) => {
+    // call the source code &
+    // make assertions against the mockProvider/contract
+  })
+})
+```
+
+The flow is the same as a traditional consumer test, in fact if the repo has both, both tests are executed
+
+```bash
+npm run test:consumer
+npm run publish:pact
+```
+
+## Message queue provider tests in short
+
+These tests verify that **the messages the provider produces match the structure the consumer expects**.
+
+In contrast, in traditional CDCT, the tests verify that **the responses of the provider API match the structure the consumer expects**.
+
+1. The message consumer already generated the contract and published it. (Same thing as the traditional CDCT)
+
+2. The provider has one test per consumer to ensure all is satisfactory. Most of the file is about setting up the options. (Again, same)
+
+3. We ensure that the provider api is running locally. (Again, same)
+
+4. **The message queue consumer tests execute against the provider/message-producer**, as if they are a regular message-consumer running locally.
+
+   In contrast, in traditional CDCT, **the consumer tests execute against the provider api**, as if they are a regular API client running locally.
+
+### Execution (Same as traditional CDCT)
+
+Run the server/service.
+
+```bash
+npm run start
+```
+
+> The provider/producer server/service has to be running locally for the provider message queue tests to be executed.
+
+Run the provider/producer message queue test
+
+```bash
+npm run test:provider
+```
+
+Two in one:
+
+```bash
+npm run test:provider:ci
+```
+
+## Can I Deploy?
+
+Before deploying to an environment, we verify if the consumer and provider versions are compatible using the `can-i-deploy` tool. This step ensures that any changes made to the consumer or provider do not break existing integrations across environments.
+
+In the current setup, the provider is tested against the consumer's main branch and currently deployed versions (`dev`).
+
+Verify the provider:
+
+```bash
+npm run can:i:deploy:provider
+```
+
+Verify the consumer:
+
+```bash
+npm run can:i:deploy:consumer
+```
+
+## Record Deployments
+
+This is akin to releasing; used to record the deployment in the Pact Broker to show the deployed version in an environment. Usually this is `main` being deployed on `dev` environment.
+
+You can also run them locally but they will only execute on `main` branch. These scripts are designed to only record deployments when on the `main` branch, ensuring that only final production-ready versions are tracked.
+
+Record the provider deployment:
+
+```bash
+npm run record:provider:deployment --env=dev # change the env param as needed
+```
+
+Record the consumer deployment:
+
+```bash
+npm run record:consumer:deployment --env=dev # change the env param as needed
+```
+
+## Webhooks
+
+Recall the consumer and provider flow.
+
+The key is that, when there are multiple repos, the provider has to run `test:provider:ci` `(#3)` after the consumer runs `publish:pact` `(#2)` but before the consumer can run `can:i:deploy:consumer` `(#4)` . The trigger to run `test:provider:ci` `(#3)` has to happen automatically, webhooks handle this.
+
+```bash
+# Consumer
+npm run test:consumer # (1)
+npm run publish:pact  # (2)
+npm run can:i:deploy:consumer # (4)
+# only on main
+npm run record:consumer:deployment --env=dev # (5) change the env param as needed
+
+# Provider
+npm run test:provider:ci # (3) triggered by webhooks
+npm run can:i:deploy:provider # (4)
+# only on main
+npm run record:provider:deployment --env=dev # (5) change the env param as needed
+```
+
+## Nuances of the env vars & scripts
+
+To streamline our scripts, we've centralized the setup of environment variables in a script:
+
+```bash
+./scripts/env-setup.sh
+```
+
+This script initializes critical environment variables like `GITHUB_SHA` and `GITHUB_BRANCH` and values at the `.env` file `PACT_BROKER_TOKEN` and `PACT_BROKER_BASE_URL`, which are used across multiple scripts to ensure consistency.
+
+Using `GITHUB_SHA` and `GITHUB_BRANCH` in your scripts is essential for ensuring traceability and consistency across different environments and CI/CD workflows. Here's why:
+
+#### Why `GITHUB_SHA` and `GITHUB_BRANCH`?
+
+- **`GITHUB_SHA`**: This variable represents the unique commit ID (SHA) in Git. By using the commit ID as the version identifier when publishing the contract or running tests, you can precisely trace which version of your code generated a specific contract. This traceability is crucial in understanding which code changes correspond to which contract versions, allowing teams to pinpoint when and where an issue was introduced.
+
+- **`GITHUB_BRANCH`**: Including the branch name ensures that contracts and deployments are correctly associated with their respective branches, supporting scenarios where different branches represent different environments or features under development. It helps prevent conflicts or mismatches in contracts when multiple teams or features are being developed simultaneously.
+
+  TL,DR; best practice, do it this way.
+
+#### What is the Pact Matrix?
+
+The Pact Matrix is a feature within Pactflow (or other Pact brokers) that visualizes the relationships between consumer and provider versions and their verification status across different environments. The matrix shows:
+
+- Which versions of consumers are compatible with which versions of providers.
+- The verification results of these interactions across various environments (e.g., dev, stage, prod).
+
+By using `GITHUB_SHA` and `GITHUB_BRANCH` in your CI/CD workflows, you ensure that the matrix accurately reflects the state of your contracts and their verifications. This makes it easier to determine if a particular consumer or provider version is safe to deploy in a specific environment, ultimately enabling seamless integration and deployment processes.
+
+Example matrix:
+
+| **Consumer Version (SHA)** | **Provider Version (SHA)** | **Branch**  | **Environment** | **Verification Status** | **Comments**                                                                                             |
+| -------------------------- | -------------------------- | ----------- | --------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `abc123`                   | `xyz789`                   | `main`      | `production`    | Passed                  | The consumer and provider are both verified and deployed in production.                                  |
+| `def456`                   | `xyz789`                   | `main`      | `staging`       | Passed                  | The same provider version is compatible with a newer consumer version in staging.                        |
+| `ghi789`                   | `xyz789`                   | `feature-x` | `development`   | Failed                  | The consumer from a feature branch failed verification with the provider in the development environment. |
+| `jkl012`                   | `uvw345`                   | `main`      | `production`    | Pending                 | A new provider version is pending verification against the consumer in production.                       |
+
+
+
+================================================
+FILE: jest-pact.config.ts
+================================================
+import type { JestConfigWithTsJest } from 'ts-jest'
+
+export const config: JestConfigWithTsJest = {
+  clearMocks: true,
+  testTimeout: 20000, // Can be longer due to pact tests
+  collectCoverage: false, // You can disable coverage for pact tests if needed
+  moduleDirectories: ['node_modules', 'src'],
+  modulePathIgnorePatterns: ['dist'],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }]
+  },
+  testMatch: ['**/*.pacttest.ts'], // Pact test file match
+  testEnvironment: 'node'
+}
+
+export default config
+
+
+
+================================================
+FILE: jest.config.ts
+================================================
+import type { JestConfigWithTsJest } from 'ts-jest'
+
+export const config: JestConfigWithTsJest = {
+  clearMocks: true,
+  testTimeout: 10000,
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.pacttest.ts', // Exclude pacttest files
+    '!**/test-helpers/**', // Exclude test helpers
+    '!**/*.json',
+    '!?(**)/?(*.|*-)types.ts',
+    '!**/models/*',
+    '!**/__snapshots__/*',
+    '!**/scripts/*'
+  ],
+  coverageDirectory: './coverage',
+  coverageReporters: [
+    'clover',
+    'json',
+    'lcov',
+    ['text', { skipFull: true }],
+    'json-summary'
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 0,
+      branches: 0,
+      lines: 0,
+      functions: 0
+    }
+  },
+  moduleDirectories: ['node_modules', 'src'],
+  modulePathIgnorePatterns: ['dist'],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }]
+  },
+  testMatch: ['**/*.test.ts'],
+  testEnvironment: 'node'
+}
+
+export default config
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "pact-js-example-consumer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Murat Ozcan",
+  "license": "ISC",
+  "scripts": {
+    "cy:open-local": "cypress open --e2e --browser chrome --config-file cypress/config/local.config.ts",
+    "cy:run-local": "cypress run --e2e --browser chrome --config-file cypress/config/local.config.ts",
+    "mock:server": ". ./scripts/env-setup.sh && npx mockoon-cli start --data ./mockoon/provider-mock.json --port ${SERVERPORT}",
+    "prettier": "prettier --ignore-path .gitignore \"**/*.+(js|ts|json)\"",
+    "fix:format": "npm run prettier -- --write",
+    "validate": "npm-run-all --parallel typecheck lint test fix:format",
+    "test": "jest --detectOpenHandles --verbose --silent --config jest.config.ts",
+    "test:watch": "jest --watch --config jest.config.ts",
+    "test:consumer": "rm -rf ./pacts && jest --config jest-pact.config.ts --detectOpenHandles",
+    "publish:pact": ". ./scripts/publish-pact.sh",
+    "can:i:deploy:consumer": ". ./scripts/can-i-deploy-consumer.sh",
+    "record:consumer:deployment": ". ./scripts/record-consumer-deployment.sh",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.jest.json",
+    "lint": "eslint --ext=.js,.ts,.tsx --fix",
+    "start": "tsx ./src/events/events-listen.ts",
+    "pw:open-local": "npx playwright test --ui -c pw/config/playwright-local.config.ts",
+    "pw:open-local-debug": "PWDEBUG=1 npx playwright test --ui -c pw/config/playwright-local.config.ts",
+    "pw:run-local": "npx playwright test -c pw/config/playwright-local.config.ts",
+    "pw:run-local-debug": "PW_HTML_REPORT=1 npx playwright test --trace on -c pw/config/playwright-local.config.ts ; npx playwright show-report",
+    "pw:trace": "npx playwright show-trace",
+    "pw:clear": "rm -rf test-results playwright-report playwright/.cache"
+  },
+  "devDependencies": {
+    "@bahmutov/cy-api": "2.2.8",
+    "@bahmutov/cypress-esbuild-preprocessor": "2.2.5",
+    "@cypress/skip-test": "2.6.1",
+    "@esbuild-plugins/node-globals-polyfill": "0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "0.2.2",
+    "@faker-js/faker": "10.0.0",
+    "@mockoon/cli": "9.3.0",
+    "@pact-foundation/pact": "13.2.0",
+    "@pact-foundation/pact-cli": "16.1.2",
+    "@playwright/test": "^1.49.1",
+    "@types/jest": "30.0.0",
+    "@types/lodash": "4.17.20",
+    "@types/node": "22.18.0",
+    "@typescript-eslint/eslint-plugin": "8.41.0",
+    "@typescript-eslint/parser": "8.41.0",
+    "cy-spok": "1.6.2",
+    "cypress": "15.0.0",
+    "cypress-data-session": "2.8.7",
+    "cypress-map": "1.49.0",
+    "cypress-recurse": "1.37.1",
+    "dotenv": "17.2.1",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.4",
+    "eslint-plugin-cypress": "3.6.0",
+    "eslint-plugin-filenames": "1.3.2",
+    "eslint-plugin-implicit-dependencies": "1.1.1",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-no-only-tests": "3.3.0",
+    "eslint-plugin-prettier": "5.5.4",
+    "jest": "30.1.1",
+    "lodash": "4.17.21",
+    "nock": "14.0.10",
+    "npm-run-all2": "8.0.4",
+    "prettier": "3.6.2",
+    "ts-jest": "29.4.1",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "7.3.4",
+    "axios": "1.11.0",
+    "express": "5.1.0",
+    "kafkajs": "2.2.4",
+    "zod": "3.25.76"
+  }
+}
+
+
+
+================================================
+FILE: renovate.json
+================================================
+{
+  "extends": ["config:base"],
+  "automerge": true,
+  "rebaseWhen": "conflicted",
+  "prHourlyLimit": 2,
+  "updateNotScheduled": false,
+  "timezone": "America/New_York",
+  "schedule": ["after 10pm and before 5am on every weekday", "every weekend"],
+  "masterIssue": true,
+  "labels": ["type: dependencies", "renovate"],
+  "dependencyDashboardApproval": false,
+  "packageRules": [
+    {
+      "groupName": "All Minor and Patch Updates",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}
+
+
+
+================================================
+FILE: tsconfig.jest.json
+================================================
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["**/cypress.d.ts", "**/cypress", "**/*.cy.ts*"],
+  "compilerOptions": {
+    "types": ["@types/jest"]
+  },
+  "include": ["**/*.test.ts*", "**/*.pacttest.ts*"]
+}
+
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "include": [
+    "src",
+    "./jest.config.ts",
+    "./jest-pact.config.ts",
+    "./.eslintrc.js",
+    "cypress",
+    "cypress/index.ts",
+    "pw"
+  ],
+  "exclude": ["node_modules", "coverage", "dist", "**/*.*test.ts*"],
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+    /* Projects */
+    // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
+    // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
+    // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
+    // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
+    // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
+    // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
+    /* Language and Environment */
+    "target": "es2022" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+    // "jsx": "preserve",                                /* Specify what JSX code is generated. */
+    // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
+    // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
+    // "jsxFactory": "",                                 /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
+    // "jsxFragmentFactory": "",                         /* Specify the JSX Fragment reference used for fragments when targeting React JSX emit e.g. 'React.Fragment' or 'Fragment'. */
+    // "jsxImportSource": "",                            /* Specify module specifier used to import the JSX factory functions when using 'jsx: react-jsx*'. */
+    // "reactNamespace": "",                             /* Specify the object invoked for 'createElement'. This only applies when targeting 'react' JSX emit. */
+    // "noLib": true,                                    /* Disable including any library files, including the default lib.d.ts. */
+    // "useDefineForClassFields": true,                  /* Emit ECMAScript-standard-compliant class fields. */
+    // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
+    /* Modules */
+    "module": "NodeNext" /* Specify what module code is generated. */,
+    // "rootDir": "./",                                  /* Specify the root folder within your source files. */
+    "moduleResolution": "NodeNext" /* Specify how TypeScript looks up a file from a given module specifier. */,
+    // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
+    // "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
+    // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
+    // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
+    // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
+    // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
+    // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
+    "resolveJsonModule": true /* Enable importing .json files. */,
+    // "allowImportingTsExtensions": true                /* Allow importing .ts files even when they cannot be resolved. */
+    // "noResolve": true,                                /* Disallow 'import's, 'require's or '<reference>'s from expanding the number of files TypeScript should add to a project. */
+    /* JavaScript Support */
+    // "allowJs": true /* Allow JavaScript files to be a part of your program. Use the 'checkJS' option to get errors from these files. */,
+    // "checkJs": true,                                  /* Enable error reporting in type-checked JavaScript files. */
+    // "maxNodeModuleJsDepth": 1,                        /* Specify the maximum folder depth used for checking JavaScript files from 'node_modules'. Only applicable with 'allowJs'. */
+    /* Emit */
+    // "declaration": true,                              /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
+    // "declarationMap": true,                           /* Create sourcemaps for d.ts files. */
+    // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
+    // "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
+    // "outFile": "./",                                  /* Specify a file that bundles all outputs into one JavaScript file. If 'declaration' is true, also designates a file that bundles all .d.ts output. */
+    // "outDir": "./",                                   /* Specify an output folder for all emitted files. */
+    // "removeComments": true,                           /* Disable emitting comments. */
+    "noEmit": true /* Disable emitting files from a compilation. */,
+    // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
+    // "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
+    // "downlevelIteration": true,                       /* Emit more compliant, but verbose and less performant JavaScript for iteration. */
+    // "sourceRoot": "",                                 /* Specify the root path for debuggers to find the reference source code. */
+    // "mapRoot": "",                                    /* Specify the location where debugger should locate map files instead of generated locations. */
+    // "inlineSourceMap": true,                          /* Include sourcemap files inside the emitted JavaScript. */
+    // "inlineSources": true,                            /* Include source code in the sourcemaps inside the emitted JavaScript. */
+    // "emitBOM": true,                                  /* Emit a UTF-8 Byte Order Mark (BOM) in the beginning of output files. */
+    // "newLine": "crlf",                                /* Set the newline character for emitting files. */
+    // "stripInternal": true,                            /* Disable emitting declarations that have '@internal' in their JSDoc comments. */
+    // "noEmitHelpers": true,                            /* Disable generating custom helper functions like '__extends' in compiled output. */
+    // "noEmitOnError": true,                            /* Disable emitting files if any type checking errors are reported. */
+    // "preserveConstEnums": true,                       /* Disable erasing 'const enum' declarations in generated code. */
+    // "declarationDir": "./",                           /* Specify the output directory for generated declaration files. */
+    // "preserveValueImports": true,                     /* Preserve unused imported values in the JavaScript output that would otherwise be removed. */
+    /* Interop Constraints */
+    // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
+    "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    // "preserveSymlinks": true,                         /* Disable resolving symlinks to their realpath. This correlates to the same flag in node. */
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+    // "noImplicitAny": true,                            /* Enable error reporting for expressions and declarations with an implied 'any' type. */
+    "strictNullChecks": true /* When type checking, take into account 'null' and 'undefined'. */,
+    "strictFunctionTypes": true /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */,
+    // "strictBindCallApply": true,                      /* Check that the arguments for 'bind', 'call', and 'apply' methods match the original function. */
+    // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */
+    // "noImplicitThis": true,                           /* Enable error reporting when 'this' is given the type 'any'. */
+    // "useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
+    // "alwaysStrict": true,                             /* Ensure 'use strict' is always emitted. */
+    // "noUnusedLocals": true,                           /* Enable error reporting when local variables aren't read. */
+    // "noUnusedParameters": true,                       /* Raise an error when a function parameter isn't read. */
+    // "exactOptionalPropertyTypes": true /* Interpret optional property types as written, rather than adding 'undefined'. */,
+    // "noImplicitReturns": true,                        /* Enable error reporting for codepaths that do not explicitly return in a function. */
+    // "noFallthroughCasesInSwitch": true,               /* Enable error reporting for fallthrough cases in switch statements. */
+    "noUncheckedIndexedAccess": true /* Add 'undefined' to a type when accessed using an index. */,
+    // "noImplicitOverride": true,                       /* Ensure overriding members in derived classes are marked with an override modifier. */
+    // "noPropertyAccessFromIndexSignature": true,       /* Enforces using indexed accessors for keys declared using an indexed type. */
+    // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
+    // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
+    /* Completeness */
+    "skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+  }
+}
+
+
+
+================================================
+FILE: .env.example
+================================================
+# create a free pact broker at 
+# https://pactflow.io/try-for-free/
+PACT_BROKER_TOKEN=***********
+PACT_BROKER_BASE_URL=https://yourownorg.pactflow.io
+SERVERPORT=3001 # aka pact provider / event producer / mockoon
+CLIENTPORT=3000 # self aka pact consumer / event consumer
+KAFKA_UI_URL=http://localhost:8085
+
+
+================================================
+FILE: .eslintignore
+================================================
+.eslintrc.js
+wallaby.js
+
+
+
+================================================
+FILE: .eslintrc.js
+================================================
+module.exports = {
+  env: {
+    es2021: true,
+    node: true
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/typescript',
+    'plugin:import/recommended',
+    'plugin:cypress/recommended',
+    'plugin:prettier/recommended'
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.jest.json']
+  },
+  plugins: [
+    '@typescript-eslint',
+    'filenames',
+    'implicit-dependencies',
+    'no-only-tests'
+  ],
+  settings: {
+    'import/resolver': {
+      typescript: {}
+    }
+  },
+  ignorePatterns: ['dist', 'node_modules', 'scripts'],
+  root: true,
+  rules: {
+    '@typescript-eslint/consistent-type-imports': 'error',
+    '@typescript-eslint/consistent-type-exports': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
+    'no-only-tests/no-only-tests': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'filenames/match-regex': ['error', '^[a-z0-9-._\\[\\]]+$', true],
+    complexity: ['warn', 15],
+    'object-curly-spacing': ['error', 'always'],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'single'],
+    semi: ['error', 'never'],
+    'import/default': 'off'
+  }
+}
+
+
+
+================================================
+FILE: .npmrc
+================================================
+registry=https://registry.npmjs.org
+
+
+================================================
+FILE: .nvmrc
+================================================
+22
+
+
+================================================
+FILE: .prettierrc
+================================================
+{
+  "printWidth": 80,
+  "trailingComma": "none",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true
+}
+
+
+
+================================================
+FILE: cypress/index.ts
+================================================
+/* eslint-disable @typescript-eslint/no-namespace */
+import type { Movie } from '../src/consumer'
+export {}
+
+declare global {
+  namespace Cypress {
+    interface Chainable<Subject> {
+      /** Gets a list of movies
+       * ```js
+       * cy.getMovies()
+       * ```
+       */
+      getMovies(url?: string): Chainable<Response<Movie[]> & Messages>
+
+      /** Gets a movie by id
+       * ```js
+       * cy.getMovieById(1)
+       * ```
+       */
+      getMovieById(
+        id: number,
+        url?: string
+      ): Chainable<Response<Movie> & Messages>
+
+      /** Gets a movie by name
+       * ```js
+       * cy.getMovieByName('The Great Gatsby')
+       * ```
+       */
+      getMovieByName(
+        name: string,
+        url?: string
+      ): Chainable<Response<Movie> & Messages>
+
+      /** Creates a movie
+       * ```js
+       * cy.addMovie({name: 'The Great Gatsby', year: 1925  })
+       * ```
+       */
+      addMovie(
+        body: Omit<Movie, 'id'>,
+        url?: string
+      ): Chainable<Response<Omit<Movie, 'id'>> & Messages>
+
+      /** Deletes a movie
+       * ```js
+       * cy.deleteMovie(1)
+       * ```
+       */
+      deleteMovie(
+        id: number,
+        url?: string
+      ): Chainable<Response<Movie> & Messages>
+
+      /** Updates a movie
+       * ```js
+       * cy.updateMovie(1, {name: 'The Great Gatsby Updated', year: 2000})
+       * ```
+       */
+      updateMovie(
+        id: number,
+        body: Partial<Movie>,
+        url?: string
+      ): Chainable<Response<Movie> & Messages>
+
+      /** https://www.npmjs.com/package/@cypress/skip-test
+       * `cy.skipOn('localhost')` */
+      skipOn(
+        nameOrFlag: string | boolean | (() => boolean),
+        cb?: () => void
+      ): Chainable<Subject>
+
+      /** https://www.npmjs.com/package/@cypress/skip-test
+       * `cy.onlyOn('localhost')` */
+      onlyOn(
+        nameOrFlag: string | boolean | (() => boolean),
+        cb?: () => void
+      ): Chainable<Subject>
+    }
+  }
+}
+
+
+
+================================================
+FILE: cypress/tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["esnext", "dom"],
+    "types": ["cypress", "node", "@bahmutov/cy-api", "cypress-data-session"],
+    "allowJs": true,
+    "resolveJsonModule": true
+  },
+  "include": ["**/*.ts", "index.ts"],
+  "extends": "../tsconfig.json"
+}
+
+
+
+================================================
+FILE: cypress/config/base.config.ts
+================================================
+import plugins from '../support/plugins'
+import tasks from '../support/tasks'
+import esbuildPreprocessor from '../support/esbuild-preprocessor'
+
+export const baseConfig: Cypress.ConfigOptions = {
+  projectId: 'kdr2hm',
+  viewportHeight: 1280,
+  viewportWidth: 1280,
+
+  e2e: {
+    setupNodeEvents(on, config) {
+      esbuildPreprocessor(on)
+      tasks(on)
+      return plugins(on, config)
+    }
+  }
+}
+
+
+
+================================================
+FILE: cypress/config/local.config.ts
+================================================
+/* eslint-disable @typescript-eslint/no-var-requires */
+import { defineConfig } from 'cypress'
+import { baseConfig } from './base.config'
+import path from 'node:path'
+import merge from 'lodash/merge'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require('dotenv').config({
+  path: path.resolve(__dirname, '../../.env')
+})
+
+const serverPort = process.env.SERVERPORT || 3001
+
+const config = {
+  e2e: {
+    env: {
+      ENVIRONMENT: 'local',
+      KAFKA_UI_URL: 'http://localhost:8085' // defined at the server src/events/kafka-cluster.yml L85, purely optional
+    },
+    baseUrl: `http://localhost:${serverPort}`
+  }
+}
+
+export default defineConfig(merge({}, baseConfig, config))
+
+
+
+================================================
+FILE: cypress/e2e/crud-movie-event.cy.ts
+================================================
+import '@cypress/skip-test/support'
+
+import type { Movie } from '../../src/consumer'
+import { generateMovie } from '../support/factories'
+import spok from 'cy-spok'
+import { retryableBefore } from '../support/retryable-before'
+import { parseKafkaEvent } from '../support/parse-kafka-event'
+import { recurse } from 'cypress-recurse'
+
+describe('CRUD movie', () => {
+  const movie = generateMovie()
+  const updatedMovie = { name: 'Updated Name', year: 2000, rating: 8.5 }
+  const movieProps: Omit<Movie, 'id'> = {
+    name: spok.string,
+    year: spok.number,
+    rating: spok.number,
+    director: spok.string
+  }
+
+  retryableBefore(() => {
+    cy.exec(
+      `curl -s -o /dev/null -w "%{http_code}" ${Cypress.env('KAFKA_UI_URL')}`,
+      {
+        failOnNonZeroExit: false
+      }
+    ).then((res) => {
+      cy.log('**npm run kafka:start at the server to enable this test**')
+      cy.skipOn(res.stdout !== '200')
+    })
+
+    cy.api({
+      method: 'GET',
+      url: '/'
+    })
+      .its('body.message')
+      .should('eq', 'Server is running')
+  })
+
+  it('should crud', () => {
+    cy.addMovie(movie)
+      .should(spok({ data: movieProps, status: 200 }))
+      .print()
+      .its('data.id')
+      .then((id) => {
+        recurse(
+          () => parseKafkaEvent(id, 'movie-created'),
+          spok([
+            {
+              id,
+              name: movie.name,
+              year: movie.year,
+              topic: 'movie-created'
+            }
+          ])
+        )
+
+        cy.getMovies().should(spok(spok.array)).findOne({ name: movie.name })
+
+        cy.getMovieById(id)
+          .its('data')
+          .should(
+            spok({
+              ...movieProps,
+              id
+            })
+          )
+          .its('name')
+          .then((name) => {
+            cy.getMovieByName(name)
+              .its('data')
+              .should(
+                spok({
+                  ...movieProps,
+                  id
+                })
+              )
+          })
+
+        cy.updateMovie(id, updatedMovie).should(
+          spok({
+            data: {
+              id,
+              name: updatedMovie.name,
+              year: updatedMovie.year
+            },
+            status: 200
+          })
+        )
+        recurse(
+          () => parseKafkaEvent(id, 'movie-updated'),
+          spok([
+            {
+              id,
+              name: updatedMovie.name,
+              year: updatedMovie.year,
+              topic: 'movie-updated'
+            }
+          ])
+        )
+
+        cy.deleteMovie(id)
+        recurse(
+          () => parseKafkaEvent(id, 'movie-deleted'),
+          spok([
+            {
+              id,
+              name: updatedMovie.name,
+              year: updatedMovie.year,
+              topic: 'movie-deleted'
+            }
+          ])
+        )
+        cy.getMovies().findOne({ name: movie.name }).should('not.exist')
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/crud-movie.cy.ts
+================================================
+import type { Movie } from '../../src/consumer'
+import { generateMovie } from '../support/factories'
+import spok from 'cy-spok'
+import { retryableBefore } from '../support/retryable-before'
+
+describe('CRUD movie', () => {
+  const movie = generateMovie()
+  const updatedMovie = { name: 'Updated Name', year: 2000 }
+  const movieProps: Omit<Movie, 'id'> = {
+    name: spok.string,
+    year: spok.number,
+    rating: spok.number,
+    director: spok.string
+  }
+
+  retryableBefore(() => {
+    cy.api({
+      method: 'GET',
+      url: '/'
+    })
+      .its('body.message')
+      .should('eq', 'Server is running')
+  })
+
+  it('should crud', () => {
+    cy.addMovie(movie)
+      .should(spok({ data: movieProps, status: 200 }))
+      .print()
+      .its('data.id')
+      .then((id) => {
+        cy.getMovies()
+          .should(spok({ data: spok.array, status: 200 }))
+          .findOne({ name: movie.name })
+
+        cy.getMovieById(id)
+          .its('data')
+          .should(
+            spok({
+              ...movieProps,
+              id
+            })
+          )
+          .its('name')
+          .then((name) => {
+            cy.getMovieByName(name)
+              .its('data')
+              .should(
+                spok({
+                  ...movieProps,
+                  id
+                })
+              )
+          })
+
+        cy.updateMovie(id, updatedMovie).should(
+          spok({
+            data: {
+              id,
+              name: updatedMovie.name,
+              year: updatedMovie.year
+            },
+            status: 200
+          })
+        )
+
+        cy.deleteMovie(id).should(
+          spok({ status: 200, message: `Movie ${id} has been deleted` })
+        )
+        cy.getMovies().findOne({ name: updatedMovie.name }).should('not.exist')
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/fixtures/example.json
+================================================
+{
+  "name": "Using fixtures to represent data",
+  "email": "hello@cypress.io",
+  "body": "Fixtures are a great way to mock data for responses to routes"
+}
+
+
+
+================================================
+FILE: cypress/support/commands.ts
+================================================
+[Empty file]
+
+
+================================================
+FILE: cypress/support/e2e.ts
+================================================
+import './commands'
+import 'cypress-map'
+import '@bahmutov/cy-api'
+import type { Movie } from '../../src/consumer'
+
+const apiUrl = Cypress.config('baseUrl') || 'http://localhost:3001'
+
+Cypress.Commands.add('getMovies', (url = apiUrl) => {
+  cy.log('**getMovies**')
+  return cy.task('getMovies', url)
+})
+
+Cypress.Commands.add('getMovieById', (id: number, url = apiUrl) => {
+  cy.log(`**getMovieById: ${id}**`)
+  return cy.task('getMovieById', { url, id }) // Pass an object with `url` and `id`
+})
+
+Cypress.Commands.add('getMovieByName', (name: string, url = apiUrl) => {
+  cy.log(`**getMovieByName: ${name}**`)
+  return cy.task('getMovieByName', { url, name })
+})
+
+Cypress.Commands.add('addMovie', (data: Omit<Movie, 'id'>, url = apiUrl) => {
+  cy.log('**addMovie**')
+  return cy.task('addMovie', {
+    url,
+    data
+  })
+})
+
+Cypress.Commands.add('deleteMovie', (id: number, url = apiUrl) => {
+  cy.log('**deleteMovie by id: ${id}**')
+  return cy.task('deleteMovieById', { url, id })
+})
+
+Cypress.Commands.add(
+  'updateMovie',
+  (id: number, data: Partial<Omit<Movie, 'id'>>, url = apiUrl) => {
+    cy.log('**updateMovie by id: ${id}**')
+    return cy.task('updateMovie', {
+      url,
+      id,
+      data
+    })
+  }
+)
+
+
+
+================================================
+FILE: cypress/support/esbuild-preprocessor.ts
+================================================
+import createBundler from '@bahmutov/cypress-esbuild-preprocessor'
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'
+
+export default function tasks(on: Cypress.PluginEvents) {
+  on(
+    'file:preprocessor',
+    createBundler({
+      plugins: [
+        NodeModulesPolyfillPlugin(),
+        NodeGlobalsPolyfillPlugin({
+          process: true,
+          buffer: true
+        })
+      ]
+    })
+  )
+}
+
+
+
+================================================
+FILE: cypress/support/factories.ts
+================================================
+import { faker } from '@faker-js/faker'
+import type { Movie } from '../../src/consumer'
+
+export const generateMovie = (): Omit<Movie, 'id'> => {
+  return {
+    name: faker.lorem.words(3), // random 3-word title
+    year: faker.date.past({ years: 50 }).getFullYear(), // random year within the past 50 years
+    rating: faker.number.float({ min: 1, max: 10, fractionDigits: 1 }), // random rating between 1 and 10 with one decimal place,
+    director: faker.lorem.words(3)
+  }
+}
+
+
+
+================================================
+FILE: cypress/support/log.ts
+================================================
+// an example task that logs to the CLI console
+// cy.task('log', 'e2e sanity passed')
+
+const log = (x: string) => {
+  console.log(x)
+
+  return null
+}
+
+export default log
+
+
+
+================================================
+FILE: cypress/support/parse-kafka-event.ts
+================================================
+import type { Movie } from '../../src/consumer'
+import { logFilePath } from '../../src/events/log-file-path'
+import type { MovieAction } from '../../src/events/movie-event-types'
+
+type Entry = Movie & { topic: string }
+
+/**
+ * Curried filter function to filter by topic and movieId
+ *
+ * @param {number} movieId - The ID of the movie to filter by.
+ * @param {string} topic - The Kafka topic to filter by.
+ * @returns {(entries: Array<ReturnType<typeof reshape>>) => Array} - A function that filters entries based on the topic and movieId.
+ */
+const filterByTopicAndId =
+  (movieId: number, topic: string) => (entries: Entry[]) =>
+    entries.filter((entry: Entry) => {
+      return entry.topic === topic && entry.id === movieId
+    })
+
+/**
+ * Parses the Kafka event log file and filters events based on the topic and movieId.
+ *
+ * @param {number} movieId - The ID of the movie to filter for.
+ * @param {MovieAction} topic - The Kafka topic to filter by.
+ * @param {string} [filePath=logFilePath] - Optional file path for the Kafka event log file.
+ * @returns {Cypress.Chainable} - A Cypress chainable that resolves to the first matching event.
+ */
+export const parseKafkaEvent = (
+  movieId: number,
+  topic: `movie-${MovieAction}`,
+  filePath = logFilePath
+) =>
+  cy
+    .print('parsing Kafka events..')
+    .readFile(filePath)
+    .invoke('trim')
+    .invoke('split', '\n')
+    .map(JSON.parse)
+    .apply(filterByTopicAndId(movieId, topic))
+
+
+
+================================================
+FILE: cypress/support/plugins.ts
+================================================
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cyDataSession = require('cypress-data-session/src/plugin')
+
+/**
+ * The collection of plugins to use with Cypress
+ * @param on  `on` is used to hook into various events Cypress emits
+ * @param config  `config` is the resolved Cypress config
+ */
+export default function plugins(
+  on: Cypress.PluginEvents,
+  config: Cypress.PluginConfigOptions
+) {
+  return {
+    // add plugins here
+    ...cyDataSession(on, config)
+  }
+}
+
+
+
+================================================
+FILE: cypress/support/retryable-before.ts
+================================================
+/**
+ * A `before()` alternative that gets run when a failing test is retried.
+ *
+ * By default cypress `before()` isn't run when a test below it fails
+ * and is retried. Because we use `before()` as a place to setup state
+ * before running assertions inside `it()` this means we can't make use
+ * of cypress retry functionality to make our suites more reliable.
+ *
+ * https://github.com/cypress-io/cypress/issues/19458
+ * https://stackoverflow.com/questions/71285827/cypress-e2e-before-hook-not-working-on-retries
+ */
+export const retryableBefore = (fn: () => void) => {
+  let shouldRun = true
+
+  // we use beforeEach as cypress will run this on retry attempt
+  // we just abort early if we detected that it's already run
+  beforeEach(() => {
+    if (!shouldRun) return
+    shouldRun = false
+    fn()
+  })
+
+  // When a test fails we flip the `shouldRun` flag back to true
+  // so when cypress retries and runs the `beforeEach()` before
+  // the test that failed, we'll run the `fn()` logic once more.
+  Cypress.on('test:after:run', (result) => {
+    if (result.state === 'failed') {
+      if (result.currentRetry < result.retries) {
+        shouldRun = true
+      }
+    }
+  })
+}
+
+
+
+================================================
+FILE: cypress/support/tasks.ts
+================================================
+import log from './log'
+import type { Movie } from '../../src/consumer'
+import {
+  getMovies,
+  getMovieById,
+  getMovieByName,
+  addMovie,
+  deleteMovieById,
+  updateMovie
+} from '../../src/consumer'
+
+/**
+ * The collection of tasks to use with `cy.task()`
+ * @param on `on` is used to hook into various events Cypress emits
+ */
+export default function tasks(on: Cypress.PluginEvents) {
+  on('task', { log })
+
+  // (a) => f(a)
+  // () => f()
+  // f
+  on('task', { getMovies })
+
+  // KEY: a pattern to fine tune cy task when handling multiple arguments
+  // Cypress tasks only accept a single argument, but we can pass multiple values
+  // by wrapping them inside an object. This ensures the argument is serializable,
+  // which is a requirement for passing data between Cypress and Node.js.
+  // Adjust functions to expect an object, even if the original function took multiple arguments.
+  on('task', {
+    // the cy task
+    getMovieById: ({ url, id }: { url: string; id: number }) =>
+      // the original function
+      getMovieById(url, id),
+
+    getMovieByName: ({ url, name }: { url: string; name: string }) =>
+      getMovieByName(url, name),
+
+    addMovie: ({ url, data }: { url: string; data: Omit<Movie, 'id'> }) =>
+      addMovie(url, data),
+
+    updateMovie: ({
+      url,
+      id,
+      data
+    }: {
+      url: string
+      id: number
+      data: Partial<Omit<Movie, 'id'>>
+    }) => updateMovie(url, id, data)
+  })
+
+  // we can add them all together in one 'task', or separately
+  on('task', {
+    deleteMovieById: ({ url, id }: { url: string; id: number }) =>
+      deleteMovieById(url, id)
+  })
+}
+
+
+
+================================================
+FILE: mockoon/provider-mock.json
+================================================
+{
+  "uuid": "17f0c9ff-89f9-4682-a07b-47f4efece198",
+  "lastMigration": 32,
+  "name": "provider-mock",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3001,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "61df68a0-2169-48dc-80c4-1042b971438d",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "__messages__",
+      "responses": [
+        {
+          "uuid": "612a5ee1-2f28-4c20-9f6f-9b856cf38deb",
+          "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /__messages__</pre>\n</body>\n</html>\n",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-security-policy",
+              "value": "default-src 'none'"
+            },
+            {
+              "key": "content-type",
+              "value": "text/html; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:28 GMT"
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-content-type-options",
+              "value": "nosniff"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "152"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "95a7a19a-167e-4b44-9389-30e11ccc554e",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "",
+      "responses": [
+        {
+          "uuid": "8820d01a-565e-4c36-a8e6-15d0d043c422",
+          "body": "{\n  \"message\": \"Server is running\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:28 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"1f-wj0DLAYn9zOzb8xGWeBYucEznE4\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "36"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "e6c27c44-7a74-4e02-84ef-5b4bc5c87e81",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "__messages__",
+      "responses": [
+        {
+          "uuid": "4c703015-8446-43a7-a1f1-872966e71ebd",
+          "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /__messages__</pre>\n</body>\n</html>\n",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-security-policy",
+              "value": "default-src 'none'"
+            },
+            {
+              "key": "content-type",
+              "value": "text/html; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:28 GMT"
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-content-type-options",
+              "value": "nosniff"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "151"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "f076e69f-22a3-4b73-9798-d38404c97f2c",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "movies",
+      "responses": [
+        {
+          "uuid": "9761b7db-e860-4e9e-b99e-4562c1ca4fc8",
+          "body": "{\n  \"status\": 200,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"tabella cupressus demitto\",\n    \"year\": 1985,\n    \"rating\": 7.5,\n    \"director\": \"Christopher Nolan\",\n    \"oscar\": true\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:28 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"4d-wMO8rvSG4zdycT2DGCjEHn4tXrQ\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "107"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "c5380a71-b614-4565-817a-c4f394cd26ff",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "movies",
+      "responses": [
+        {
+          "uuid": "2547396b-ba7a-4a77-9344-d0539e20bfdb",
+          "body": "{\n  \"status\": 200,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"tabella cupressus demitto\",\n      \"year\": 1985,\n      \"rating\": 7.5,\n      \"director\": \"Christopher Nolan\",\n      \"oscar\": true\n    }\n  ]\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:29 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"4f-SBXhLaYTuG0IWhhviMFJMjt96UA\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "125"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "38f35f4b-8dae-42e0-9975-bec2823df3a4",
+          "body": "{\n  \"status\": 200,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"tabella cupressus demitto\",\n    \"year\": 1985,\n    \"rating\": 7.5,\n    \"director\": \"Christopher Nolan\",\n    \"oscar\": true\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "query",
+              "modifier": "name",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "cc4905c4-5029-4a00-8cc5-6cc8c9f98190",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "movies/1",
+      "responses": [
+        {
+          "uuid": "87ad459d-4144-4e5a-bea4-2f62c5661eae",
+          "body": "{\n  \"status\": 200,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"tabella cupressus demitto\",\n    \"year\": 1985,\n    \"rating\": 7.5,\n    \"director\": \"Christopher Nolan\",\n    \"oscar\": true\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:29 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"4d-wMO8rvSG4zdycT2DGCjEHn4tXrQ\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "107"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "280bf17c-bfb7-44d3-b8ea-6ae59898dfc7",
+      "type": "http",
+      "documentation": "",
+      "method": "put",
+      "endpoint": "movies/1",
+      "responses": [
+        {
+          "uuid": "65729f6d-ab7c-4f86-88a5-63345e52511d",
+          "body": "{\n  \"status\": 200,\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Updated Name\",\n    \"year\": 2000,\n    \"rating\": 7.5,\n    \"director\": \"Christopher Nolan\",\n    \"oscar\": true\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:29 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"40-5NiXOKqCdtC/yP+lpVxnV6TA31s\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "94"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    },
+    {
+      "uuid": "67ba0d87-21ba-452b-a91d-eb2a328b028e",
+      "type": "http",
+      "documentation": "",
+      "method": "delete",
+      "endpoint": "movies/1",
+      "responses": [
+        {
+          "uuid": "fd457393-38ad-4950-9dd8-9c3f00a1328d",
+          "body": "{\n  \"status\": 200,\n  \"message\": \"Movie 1 has been deleted\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [
+            {
+              "key": "access-control-allow-headers",
+              "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+            },
+            {
+              "key": "access-control-allow-methods",
+              "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+            },
+            {
+              "key": "access-control-allow-origin",
+              "value": "http://localhost:3000"
+            },
+            {
+              "key": "connection",
+              "value": "close"
+            },
+            {
+              "key": "content-type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "date",
+              "value": "Fri, 04 Oct 2024 17:37:29 GMT"
+            },
+            {
+              "key": "etag",
+              "value": "W/\"33-eNU6TdGHHsflo/gTHPlveah4YyQ\""
+            },
+            {
+              "key": "vary",
+              "value": "Origin"
+            },
+            {
+              "key": "x-powered-by",
+              "value": "Express"
+            },
+            {
+              "key": "content-length",
+              "value": "60"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "61df68a0-2169-48dc-80c4-1042b971438d"
+    },
+    {
+      "type": "route",
+      "uuid": "95a7a19a-167e-4b44-9389-30e11ccc554e"
+    },
+    {
+      "type": "route",
+      "uuid": "e6c27c44-7a74-4e02-84ef-5b4bc5c87e81"
+    },
+    {
+      "type": "route",
+      "uuid": "f076e69f-22a3-4b73-9798-d38404c97f2c"
+    },
+    {
+      "type": "route",
+      "uuid": "c5380a71-b614-4565-817a-c4f394cd26ff"
+    },
+    {
+      "type": "route",
+      "uuid": "cc4905c4-5029-4a00-8cc5-6cc8c9f98190"
+    },
+    {
+      "type": "route",
+      "uuid": "280bf17c-bfb7-44d3-b8ea-6ae59898dfc7"
+    },
+    {
+      "type": "route",
+      "uuid": "67ba0d87-21ba-452b-a91d-eb2a328b028e"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "http://localhost:3002",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
+
+
+================================================
+FILE: pw/config/base.config.ts
+================================================
+import { defineConfig, devices } from '@playwright/test'
+
+export const baseConfig = defineConfig({
+  testDir: '../e2e',
+  testMatch: '**/*.spec.ts',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 3 : 2,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: process.env.CI
+    ? 'html'
+    : process.env.PW_HTML_REPORT
+      ? [['list'], ['html']]
+      : 'list',
+  use: {
+    trace: 'retain-on-first-failure'
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] }
+    }
+  ]
+})
+
+
+
+================================================
+FILE: pw/config/playwright-local.config.ts
+================================================
+import { baseConfig } from './base.config'
+import merge from 'lodash/merge'
+import { config as dotenvConfig } from 'dotenv'
+import path from 'node:path'
+
+dotenvConfig({
+  path: path.resolve(__dirname, '../../.env')
+})
+
+const serverPort = process.env.SERVERPORT || 3001
+const BASE_URL = `http://localhost:${serverPort}`
+
+export default merge({}, baseConfig, {
+  use: {
+    baseURL: BASE_URL
+  },
+  webServer: {
+    command: 'npm run mock:server',
+    url: BASE_URL,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe'
+  }
+})
+
+
+
+================================================
+FILE: pw/e2e/crud-movie-event.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+import { runCommand } from '../support/utils/run-command'
+import { recurseWithExpect } from '../support/utils/recurse-with-expect'
+import {
+  getMovies,
+  getMovieById,
+  getMovieByName,
+  addMovie,
+  deleteMovieById,
+  updateMovie
+} from '../../src/consumer'
+import { generateMovie } from '../../cypress/support/factories'
+import type {
+  CreateMovieResponse,
+  GetMovieResponse,
+  UpdateMovieResponse,
+  DeleteMovieResponse
+} from '../../src/provider-schema/movie-types'
+import { parseKafkaEvent } from '../support/parse-kafka-event'
+
+const serverPort = process.env.SERVERPORT || 3001
+const apiUrl = `http://localhost:${serverPort}`
+
+test.describe('CRUD movie', () => {
+  const movie = generateMovie()
+  const updatedMovie = { name: 'Updated Name', year: 2000 }
+  const movieProps = {
+    name: expect.any(String),
+    year: expect.any(Number),
+    rating: expect.any(Number),
+    director: expect.any(String)
+  }
+
+  test.beforeAll(async ({ apiRequest }) => {
+    const responseCode = runCommand(
+      `curl -s -o /dev/null -w "%{http_code}" ${process.env.KAFKA_UI_URL}`
+    )
+    if (responseCode !== '200') {
+      test.skip()
+    }
+
+    const {
+      body: { message }
+    } = await apiRequest<{ message: string }>({
+      method: 'GET',
+      url: '/'
+    })
+    expect(message).toBe('Server is running')
+  })
+
+  test('should crud', async () => {
+    // Add a movie
+    const { data: addMovieData, status: addMovieStatus } = (await addMovie(
+      apiUrl,
+      movie
+    )) as CreateMovieResponse
+    expect(addMovieStatus).toBe(200)
+    expect(addMovieData).toMatchObject(movieProps)
+
+    const movieId = addMovieData.id
+
+    // Wait for 'movie-created' Kafka event using recurseWithExpect
+    await recurseWithExpect(
+      async () => {
+        const topic = 'movie-created'
+        const events = await parseKafkaEvent(movieId, topic)
+
+        // Assert the structure of the Kafka event
+        expect(events).toEqual([
+          {
+            topic,
+            id: movieId,
+            ...movieProps
+          }
+        ])
+      },
+      { timeout: 10000, interval: 500 }
+    )
+
+    // Get all movies and verify the new movie exists
+    const { status: getMoviesStatus, data: getMoviesData } =
+      await getMovies(apiUrl)
+    expect(getMoviesStatus).toBe(200)
+    expect(getMoviesData).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: movieId, name: movie.name })
+      ])
+    )
+
+    // Get the movie by ID
+    const { data: getMovieByIdData, status: getMovieByIdStatus } =
+      (await getMovieById(apiUrl, movieId)) as GetMovieResponse
+    expect(getMovieByIdStatus).toBe(200)
+    expect(getMovieByIdData).toMatchObject({
+      id: movieId,
+      ...movieProps
+    })
+
+    // Get the movie by name
+    const { data: getMovieByNameData, status: getMovieByNameStatus } =
+      (await getMovieByName(apiUrl, movie.name)) as GetMovieResponse
+    expect(getMovieByNameStatus).toBe(200)
+    expect(getMovieByNameData).toEqual(
+      expect.objectContaining({
+        id: movieId,
+        ...movieProps
+      })
+    )
+
+    // Update the movie
+    const { data: updateMovieData, status: updateMovieStatus } =
+      (await updateMovie(apiUrl, movieId, updatedMovie)) as UpdateMovieResponse
+    expect(updateMovieStatus).toBe(200)
+    expect(updateMovieData).toMatchObject({
+      id: movieId,
+      ...updatedMovie
+    })
+
+    await recurseWithExpect(
+      async () => {
+        const topic = 'movie-updated'
+        const event = await parseKafkaEvent(movieId, topic)
+
+        // Perform assertions on the event content
+        expect(event).toEqual([
+          {
+            topic,
+            id: movieId,
+            ...movieProps
+          }
+        ])
+      },
+      { timeout: 10000, interval: 500 }
+    )
+
+    // Delete the movie
+    const { status: deleteMovieStatus, message: deleteMovieMessage } =
+      (await deleteMovieById(apiUrl, movieId)) as DeleteMovieResponse
+    expect(deleteMovieStatus).toBe(200)
+    expect(deleteMovieMessage).toBe(`Movie ${movieId} has been deleted`)
+
+    await recurseWithExpect(
+      async () => {
+        const topic = 'movie-deleted'
+        const event = await parseKafkaEvent(movieId, topic)
+
+        // Perform assertions on the event content
+        expect(event).toEqual([
+          {
+            topic,
+            id: movieId,
+            ...movieProps
+          }
+        ])
+      },
+      { timeout: 10000, interval: 500 }
+    )
+
+    // Verify the movie no longer exists
+    const allMoviesAfterDelete = await getMovies(apiUrl)
+    expect(allMoviesAfterDelete.data).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: movieId, name: updatedMovie.name })
+      ])
+    )
+  })
+})
+
+
+
+================================================
+FILE: pw/e2e/crud-movie.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+import {
+  getMovies,
+  getMovieById,
+  getMovieByName,
+  addMovie,
+  deleteMovieById,
+  updateMovie
+} from '../../src/consumer'
+import { generateMovie } from '../../cypress/support/factories'
+import type {
+  CreateMovieResponse,
+  GetMovieResponse,
+  UpdateMovieResponse,
+  DeleteMovieResponse
+} from '../../src/provider-schema/movie-types'
+
+const serverPort = process.env.SERVERPORT || 3001
+const apiUrl = `http:localhost:${serverPort}`
+
+test.describe('CRUD movie', () => {
+  const movie = generateMovie()
+  const updatedMovie = { name: 'Updated Name', year: 2000 }
+  const movieProps = {
+    name: expect.any(String),
+    year: expect.any(Number),
+    rating: expect.any(Number),
+    director: expect.any(String)
+  }
+
+  test.beforeAll(async ({ apiRequest }) => {
+    const {
+      body: { message }
+    } = await apiRequest<{ message: string }>({
+      method: 'GET',
+      url: '/'
+    })
+    expect(message).toBe('Server is running')
+  })
+
+  test('should crud', async () => {
+    // Add a movie
+    const { data: addMovieData, status: addMovieStatus } = (await addMovie(
+      apiUrl,
+      movie
+    )) as CreateMovieResponse
+    expect(addMovieStatus).toBe(200)
+    expect(addMovieData).toMatchObject(movieProps)
+
+    const movieId = addMovieData.id
+
+    // Get all movies and verify the new movie exists
+    const { status: getMoviesStatus, data: getMoviesData } =
+      await getMovies(apiUrl)
+    expect(getMoviesStatus).toBe(200)
+    expect(getMoviesData).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: movieId })])
+    )
+
+    // Get the movie by ID
+    const { data: getMovieByIdData, status: getMovieByIdStatus } =
+      (await getMovieById(apiUrl, movieId)) as GetMovieResponse
+    expect(getMovieByIdStatus).toBe(200)
+    expect(getMovieByIdData).toMatchObject({
+      id: movieId,
+      ...movieProps
+    })
+
+    // Get the movie by name
+    const { data: getMovieByNameData, status: getMovieByNameStatus } =
+      (await getMovieByName(apiUrl, movie.name)) as GetMovieResponse
+    expect(getMovieByNameStatus).toBe(200)
+    expect(getMovieByNameData).toEqual(
+      expect.objectContaining({
+        id: movieId,
+        ...movieProps
+      })
+    )
+
+    // Update the movie
+    const { data: updateMovieData, status: updateMovieStatus } =
+      (await updateMovie(apiUrl, movieId, updatedMovie)) as UpdateMovieResponse
+    expect(updateMovieStatus).toBe(200)
+    expect(updateMovieData).toMatchObject({
+      id: movieId,
+      ...updatedMovie
+    })
+
+    // Delete the movie
+    const { status: deleteMovieStatus, message: deleteMovieMessage } =
+      (await deleteMovieById(apiUrl, movieId)) as DeleteMovieResponse
+    expect(deleteMovieStatus).toBe(200)
+    expect(deleteMovieMessage).toBe(`Movie ${movieId} has been deleted`)
+
+    // Verify the movie no longer exists
+    const allMoviesAfterDelete = await getMovies(apiUrl)
+    expect(allMoviesAfterDelete.data).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: movieId, name: updatedMovie.name })
+      ])
+    )
+  })
+})
+
+
+
+================================================
+FILE: pw/support/fixtures.ts
+================================================
+import { test as base, mergeTests } from '@playwright/test'
+import { test as apiRequestFixture } from './fixtures/api-request-fixture'
+
+// Merge the fixtures
+const test = mergeTests(apiRequestFixture) // Add new fixtures as arguments
+
+const expect = base.expect
+export { test, expect }
+
+
+
+================================================
+FILE: pw/support/parse-kafka-event.ts
+================================================
+import { promises as fs } from 'fs'
+import { logFilePath } from '../../src/events/log-file-path'
+import type {
+  MovieAction,
+  MovieEvent
+} from '../../src/events/movie-event-types'
+
+/**
+ * Filters Kafka event entries by topic and movieId.
+ *
+ * @param {number} movieId - The ID of the movie to filter by.
+ * @param {string} topic - The Kafka topic to filter by.
+ * @param {Array<MovieEvent>} entries - The list of Kafka event entries.
+ * @returns {Array<MovieEvent>} - Filtered entries based on the topic and movieId.
+ */
+const filterByTopicAndId = (
+  movieId: number,
+  topic: `movie-${MovieAction}`,
+  entries: MovieEvent[]
+) =>
+  entries.filter(
+    // @ts-expect-error can't figure it out
+    (entry: MovieEvent) => entry.topic === topic && entry.id === movieId
+  )
+
+/**
+ * Parses the Kafka event log file and filters events based on the topic and movieId.
+ *
+ * @param {number} movieId - The ID of the movie to filter for.
+ * @param {`movie-${MovieAction}`} topic - The Kafka topic to filter by.
+ * @param {string} [filePath=logFilePath] - Optional file path for the Kafka event log file.
+ * @returns {Promise<MovieEvent[]>} - A promise that resolves to the matching events.
+ */
+export const parseKafkaEvent = async (
+  movieId: number,
+  topic: `movie-${MovieAction}`,
+  filePath = logFilePath
+): Promise<MovieEvent[]> => {
+  try {
+    // Read the log file content
+    const fileContent = await fs.readFile(filePath, 'utf-8')
+    const entries: MovieEvent[] = fileContent
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as MovieEvent)
+
+    // Filter the entries by topic and movie ID
+    const filteredEntries = filterByTopicAndId(movieId, topic, entries)
+
+    return filteredEntries
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error parsing Kafka event log: ${error.message}`)
+    } else {
+      console.error('An unknown error occurred:', error)
+    }
+    throw error
+  }
+}
+
+
+
+================================================
+FILE: pw/support/fixture-helpers/plain-functions.ts
+================================================
+import type { APIRequestContext, APIResponse } from '@playwright/test'
+
+/**
+ * Simplified helper for making API requests and returning the status and JSON body.
+ * This helper automatically performs the request based on the provided method, URL, body, and headers.
+ *
+ * @param {Object} params - The parameters for the request.
+ * @param {APIRequestContext} params.request - The Playwright request object, used to make the HTTP request.
+ * @param {string} params.method - The HTTP method to use (POST, GET, PUT, DELETE).
+ * @param {string} params.url - The URL to send the request to.
+ * @param {string} [params.baseUrl] - The base URL to prepend to the request URL.
+ * @param {Record<string, unknown> | null} [params.body=null] - The body to send with the request (for POST and PUT requests).
+ * @param {Record<string, string> | undefined} [params.headers=undefined] - The headers to include with the request.
+ * @returns {Promise<{ status: number; body: unknown }>} - An object containing the status code and the parsed response body.
+ *    - `status`: The HTTP status code returned by the server.
+ *    - `body`: The parsed JSON response body from the server.
+ */
+export async function apiRequest({
+  request,
+  method,
+  url,
+  baseUrl,
+  body = null,
+  headers
+}: {
+  request: APIRequestContext
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}): Promise<{ status: number; body: unknown }> {
+  let response: APIResponse
+
+  // Common request options
+  const options: {
+    data?: Record<string, unknown> | null
+    headers?: Record<string, string>
+  } = {}
+  if (body) options.data = body
+  if (headers) options.headers = headers
+
+  // Construct full URL
+  const fullUrl = baseUrl ? `${baseUrl}${url}` : url
+
+  // Make the request based on the method
+  switch (method.toUpperCase()) {
+    case 'POST':
+      response = await request.post(fullUrl, options)
+      break
+    case 'GET':
+      response = await request.get(fullUrl, { headers })
+      break
+    case 'PUT':
+      response = await request.put(fullUrl, options)
+      break
+    case 'DELETE':
+      response = await request.delete(fullUrl, { headers })
+      break
+    default:
+      throw new Error(`Unsupported HTTP method: ${method}`)
+  }
+
+  const status = response.status()
+
+  // Determine how to parse the response body
+  let bodyData: unknown = null
+  const contentType = response.headers()['content-type'] || ''
+
+  try {
+    if (contentType.includes('application/json')) {
+      bodyData = await response.json()
+    } else if (contentType.includes('text/')) {
+      bodyData = await response.text()
+    }
+  } catch (err) {
+    console.warn(`Failed to parse response body for status ${status}: ${err}`)
+  }
+
+  return { status, body: bodyData }
+}
+
+
+
+================================================
+FILE: pw/support/fixtures/api-request-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import { apiRequest as apiRequestFunction } from '../fixture-helpers/plain-functions'
+
+export type ApiRequestParams = {
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}
+
+export type ApiRequestResponse<T = unknown> = {
+  status: number
+  body: T
+}
+
+const test = base.extend<{
+  apiRequest: <T = unknown>(
+    params: ApiRequestParams
+  ) => Promise<ApiRequestResponse<T>>
+}>({
+  apiRequest: async ({ request }, use) => {
+    const apiRequest = async <T = unknown>({
+      method,
+      url,
+      baseUrl,
+      body = null,
+      headers
+    }: ApiRequestParams): Promise<ApiRequestResponse<T>> => {
+      const response = await apiRequestFunction({
+        request,
+        method,
+        url,
+        baseUrl,
+        body,
+        headers
+      })
+
+      return {
+        status: response.status,
+        body: response.body as T
+      }
+    }
+
+    await use(apiRequest)
+  }
+})
+
+export { test }
+
+
+
+================================================
+FILE: pw/support/utils/recurse-with-expect.ts
+================================================
+export async function recurseWithExpect(
+  fn: () => Promise<void>,
+  options?: {
+    retries?: number
+    interval?: number
+    timeout?: number
+  }
+): Promise<void> {
+  const retries = options?.retries ?? 10
+  const interval = options?.interval ?? 500 // milliseconds
+  const timeout = options?.timeout ?? 10000 // milliseconds
+
+  const endTime = Date.now() + timeout
+  let attempt = 0
+
+  while (attempt < retries && Date.now() < endTime) {
+    try {
+      await fn()
+      return // All assertions passed
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.warn(
+          `Attempt ${attempt + 1} failed: ${error.message}. Retrying in ${interval}ms...`
+        )
+      } else {
+        console.error(
+          `Attempt ${attempt + 1} failed: An unknown error occurred. Retrying in ${interval}ms...`,
+          error
+        )
+        throw error
+      }
+    }
+
+    attempt++
+    await new Promise((res) => setTimeout(res, interval))
+  }
+
+  // Final attempt
+  await fn()
+}
+
+
+
+================================================
+FILE: pw/support/utils/run-command.ts
+================================================
+import { execSync } from 'child_process'
+
+/**
+ * Runs a shell command and returns the output.
+ * Handles errors gracefully and returns null if the command fails.
+ * @param {string} command - The command to run.
+ * @returns {string | null} - The output of the command or null if it fails.
+ */
+export function runCommand(command: string): string | null {
+  try {
+    return execSync(command, { encoding: 'utf-8' }).trim()
+  } catch (error) {
+    const typedError = error as Error
+    console.error(typedError.message)
+    return null // Return null to signify failure
+  }
+}
+
+
+
+================================================
+FILE: scripts/can-i-deploy-consumer.sh
+================================================
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Load environment variables
+. ./scripts/env-setup.sh
+
+# Wait longer for provider verification
+RETRY_WHILE_UNKNOWN=10  # Number of retries
+RETRY_INTERVAL=30       # Seconds between retries
+
+# Check if WebConsumer can be deployed
+pact-broker can-i-deploy \
+    --pacticipant WebConsumer \
+    --version=$GITHUB_SHA \
+    --to-environment dev \
+    --retry-while-unknown=$RETRY_WHILE_UNKNOWN \
+    --retry-interval=$RETRY_INTERVAL \
+    --verbose
+
+# Check if WebConsumer-event-consumer can be deployed
+pact-broker can-i-deploy \
+    --pacticipant WebConsumer-event-consumer \
+    --version=$GITHUB_SHA \
+    --to-environment dev \
+    --retry-while-unknown=$RETRY_WHILE_UNKNOWN \
+    --retry-interval=$RETRY_INTERVAL \
+    --verbose
+
+
+
+================================================
+FILE: scripts/env-setup.sh
+================================================
+#!/bin/bash
+
+# Load environment variables from .env if it exists
+if [ -f .env ]; then
+  set -a # all variables that are subsequently defined are automatically exported to the environment of subsequent commands
+  source .env
+  set +a # turns off allexport
+fi
+
+# Set Git-related environment variables
+export GITHUB_SHA=$(git rev-parse --short HEAD)
+export GITHUB_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+
+================================================
+FILE: scripts/publish-pact.sh
+================================================
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Load environment variables
+. ./scripts/env-setup.sh
+
+# Publish pacts for WebConsumer
+pact-broker publish ./pacts \
+    --consumer-app-version=$GITHUB_SHA \
+    --branch=$GITHUB_BRANCH \
+    --broker-base-url=$PACT_BROKER_BASE_URL \
+    --broker-token=$PACT_BROKER_TOKEN
+
+
+
+================================================
+FILE: scripts/record-consumer-deployment.sh
+================================================
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Load environment variables
+. ./scripts/env-setup.sh
+
+# Only record deployment if on the main branch
+if [ "$GITHUB_BRANCH" = "main" ]; then
+  # Record deployment for WebConsumer
+  pact-broker record-deployment \
+      --pacticipant WebConsumer \
+      --version $GITHUB_SHA \
+      --environment $npm_config_env
+  
+  # Record deployment for WebConsumer-event-consumer
+  pact-broker record-deployment \
+      --pacticipant WebConsumer-event-consumer \
+      --version $GITHUB_SHA \
+      --environment $npm_config_env
+fi
+
+
+
+================================================
+FILE: src/consumer-contract.pacttest.ts
+================================================
+import type { V3MockServer } from '@pact-foundation/pact'
+import { MatchersV3, PactV4 } from '@pact-foundation/pact'
+import path from 'path'
+import type { ErrorResponse, Movie } from './consumer'
+import {
+  addMovie,
+  deleteMovieById,
+  getMovies,
+  getMovieById,
+  getMovieByName,
+  updateMovie
+} from './consumer'
+import { createProviderState, setJsonBody } from './test-helpers/helpers'
+import type {
+  DeleteMovieResponse,
+  GetMovieResponse,
+  MovieNotFoundResponse
+} from './provider-schema/movie-types'
+
+// full list of matchers:
+// https://docs.pact.io/implementation_guides/javascript/docs/matching#v3-matching-rules
+const { like, eachLike, integer, decimal, string } = MatchersV3
+
+// 1) Setup the mock provider for the consumer
+// 2) Register the consumer's expectations against the (mock) provider
+// 3) Call the consumer against the mock provider
+// 4) Verify the consumer test and generate the contract
+
+// 1) Setup the mock provider for the consumer
+const pact = new PactV4({
+  dir: path.resolve(process.cwd(), 'pacts'),
+  consumer: 'WebConsumer',
+  provider: 'MoviesAPI'
+  // logLevel: 'debug'
+})
+
+describe('WebConsumer vs Movies API', () => {
+  const movieWithId: Movie = {
+    id: 1,
+    name: 'My movie',
+    year: 1999,
+    rating: 8.5,
+    director: 'John Doe'
+  }
+  const testId = 100
+  const movieWithTestId100: Movie = {
+    id: testId,
+    name: 'My movie',
+    year: 1999,
+    rating: 8.5,
+    director: 'John Doe'
+  }
+  const movieWithoutId: Omit<Movie, 'id'> = {
+    name: 'New movie',
+    year: 1999,
+    rating: 8.5,
+    director: 'John Doe'
+  }
+
+  const propMatcherNoId = (movieEntity: Movie | Omit<Movie, 'id'>) => ({
+    name: string(movieEntity.name),
+    year: integer(movieEntity.year),
+    rating: decimal(movieEntity.rating),
+    director: string(movieEntity.director)
+  })
+
+  describe('When a GET request is made to /movies', () => {
+    it('should return all movies', async () => {
+      // we want to ensure at least 1 movie is returned in the array of movies
+      const [stateName, stateParams] = createProviderState({
+        name: 'An existing movie exists',
+        params: movieWithId
+      })
+
+      // 2) Register the consumer's expectations against the (mock) provider
+      await pact
+        .addInteraction()
+        .given(stateName, stateParams)
+        .uponReceiving('a request to get all movies')
+        .withRequest('GET', '/movies')
+        .willRespondWith(
+          200,
+          setJsonBody({
+            status: 200,
+            data: eachLike(movieWithId)
+          })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          // 3) Call the consumer against the mock provider
+          const res = await getMovies(mockServer.url)
+          // 4) Verify the consumer test and generate the contract
+          expect(res.data).toEqual([movieWithId])
+        })
+    })
+
+    it('should return empty when no movies exist', async () => {
+      const noMovies: Movie[] = []
+
+      await pact
+        .addInteraction()
+        .given('No movies exist')
+        .uponReceiving('a request to get all movies')
+        .withRequest('GET', '/movies')
+        .willRespondWith(
+          200,
+          setJsonBody({ status: 200, data: like(noMovies) })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = await getMovies(mockServer.url)
+          expect(res.data).toEqual(noMovies)
+        })
+    })
+
+    it('should return a movie by name when requested with query parameters', async () => {
+      // we want to ensure at least 1 movie is returned in the array of movies
+      const [stateName, stateParams] = createProviderState({
+        name: 'An existing movie exists',
+        params: movieWithId
+      })
+
+      await pact
+        .addInteraction()
+        .given(stateName, stateParams)
+        .uponReceiving('a request to get a movie by name')
+        .withRequest('GET', '/movies', (builder) => {
+          builder.query({ name: movieWithId.name }) // Use query to specify query parameters
+        })
+        .willRespondWith(
+          200,
+          setJsonBody({
+            status: 200,
+            data: {
+              id: integer(movieWithId.id),
+              ...propMatcherNoId(movieWithId)
+            }
+          })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = (await getMovieByName(
+            mockServer.url,
+            movieWithId.name
+          )) as GetMovieResponse
+          expect(res.data).toEqual(movieWithId)
+        })
+    })
+  })
+
+  // PROVIDER STATES: we can simulate certain states of the api (like an empty or non-empty db)
+  // in order to cover different scenarios
+  // the state could have many more variables; it is a good practice to represent it as an object
+  // note that the consumer state name should match the provider side
+
+  // * The purpose of the stateHandlers is to ensure that the provider is in the correct state
+  // to fulfill the consumer's expectations as defined in the contract tests.
+  // * In a real-world scenario, you would typically set up this state by interacting with your service's database
+  // * or through an API provided by the service itself (locally).
+  // * This ensures that the provider test runs in a controlled environment where all the necessary data
+  // and conditions are met, allowing for accurate verification of the consumer's expectations.
+  describe('When a GET request is made to a specific movie ID', () => {
+    it('should return a specific movie', async () => {
+      const [stateName, stateParams] = createProviderState({
+        name: 'Has a movie with a specific ID',
+        params: { id: testId }
+      })
+
+      await pact
+        .addInteraction()
+        .given(stateName, stateParams)
+        .uponReceiving('a request to a specific movie')
+        .withRequest('GET', `/movies/${testId}`)
+        .willRespondWith(
+          200,
+          setJsonBody({
+            status: 200,
+            data: {
+              id: integer(testId),
+              ...propMatcherNoId(movieWithTestId100)
+            }
+          })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = (await getMovieById(
+            mockServer.url,
+            testId
+          )) as GetMovieResponse
+          expect(res.data).toEqual(movieWithTestId100)
+        })
+    })
+  })
+
+  describe('When a POST request is made to /movies', () => {
+    it('should add a new movie', async () => {
+      await pact
+        .addInteraction()
+        .given('No movies exist')
+        .uponReceiving('a request to add a new movie')
+        .withRequest('POST', '/movies', setJsonBody(movieWithoutId))
+        .willRespondWith(
+          200,
+          setJsonBody({
+            status: 200,
+            data: {
+              id: integer(), // if the example value is omitted, a random number is used
+              ...propMatcherNoId(movieWithoutId)
+            }
+          })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = await addMovie(mockServer.url, movieWithoutId)
+          expect(res).toEqual({
+            status: 200,
+            data: {
+              id: expect.any(Number),
+              name: movieWithoutId.name,
+              year: movieWithoutId.year,
+              rating: movieWithoutId.rating,
+              director: movieWithoutId.director
+            }
+          })
+        })
+    })
+
+    it('should not add a movie that already exists', async () => {
+      const errorRes: ErrorResponse = {
+        error: `Movie ${movieWithoutId.name} already exists`
+      }
+
+      const [stateName, stateParams] = createProviderState({
+        name: 'An existing movie exists',
+        params: movieWithoutId
+      })
+
+      await pact
+        .addInteraction()
+        .given(stateName, stateParams)
+        .uponReceiving('a request to the existing movie')
+        .withRequest('POST', '/movies', setJsonBody(movieWithoutId))
+        .willRespondWith(409, setJsonBody(errorRes))
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = await addMovie(mockServer.url, movieWithoutId)
+          expect(res).toEqual(errorRes)
+        })
+    })
+  })
+
+  describe('When a PUT request is made to a specific movie ID', () => {
+    it('should update an existing movie', async () => {
+      const testId = 99
+      const updatedMovieData = {
+        name: 'Updated movie',
+        year: 2000,
+        rating: 8.5,
+        director: 'Steven Spielberg'
+      }
+
+      const [stateName, stateParams] = createProviderState({
+        name: 'Has a movie with a specific ID',
+        params: { id: testId }
+      })
+
+      await pact
+        .addInteraction()
+        .given(stateName, stateParams)
+        .uponReceiving('a request to update a specific movie')
+        .withRequest('PUT', `/movies/${testId}`, setJsonBody(updatedMovieData))
+        .willRespondWith(
+          200,
+          setJsonBody({
+            status: 200,
+            data: {
+              id: integer(testId),
+              ...propMatcherNoId(updatedMovieData)
+            }
+          })
+        )
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = await updateMovie(
+            mockServer.url,
+            testId,
+            updatedMovieData
+          )
+
+          expect(res).toEqual({
+            status: 200,
+            data: {
+              id: testId,
+              name: updatedMovieData.name,
+              year: updatedMovieData.year,
+              rating: updatedMovieData.rating,
+              director: updatedMovieData.director
+            }
+          })
+        })
+    })
+  })
+
+  describe('When a DELETE request is made to /movies', () => {
+    it('should delete an existing movie successfully', async () => {
+      const testId = 200
+      const message = `Movie ${testId} has been deleted`
+
+      const state = createProviderState({
+        name: 'Has a movie with a specific ID',
+        params: { id: testId }
+      })
+
+      await pact
+        .addInteraction()
+        .given(...state)
+        .uponReceiving('a request to delete a movie that exists')
+        .withRequest('DELETE', `/movies/${testId}`)
+        .willRespondWith(200, setJsonBody({ status: 200, message }))
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = (await deleteMovieById(
+            mockServer.url,
+            testId
+          )) as DeleteMovieResponse
+          expect(res.message).toEqual(message)
+        })
+    })
+
+    it('should throw an error if movie to delete does not exist', async () => {
+      const testId = 123456789
+      const error = `Movie with ID ${testId} not found`
+
+      await pact
+        .addInteraction()
+        .uponReceiving('a request to delete a non-existing movie')
+        .withRequest('DELETE', `/movies/${testId}`)
+        .willRespondWith(404, setJsonBody({ status: 404, error }))
+        .executeTest(async (mockServer: V3MockServer) => {
+          const res = (await deleteMovieById(
+            mockServer.url,
+            testId
+          )) as MovieNotFoundResponse
+
+          expect(res.error).toEqual(error)
+        })
+    })
+  })
+})
+
+
+
+================================================
+FILE: src/consumer-kafka.pacttest.ts
+================================================
+import {
+  MessageConsumerPact,
+  Matchers,
+  asynchronousBodyHandler
+} from '@pact-foundation/pact'
+import { consumeMovieEvents } from '../src/events/movie-events'
+import path from 'node:path'
+
+const { like, eachLike, term } = Matchers
+
+describe('Kafka Movie Event Consumer', () => {
+  const messagePact = new MessageConsumerPact({
+    dir: path.resolve(process.cwd(), 'pacts'),
+    consumer: 'WebConsumer-event-consumer',
+    provider: 'MoviesAPI-event-producer'
+    // logLevel: 'debug'
+  })
+
+  const messages = eachLike({
+    key: like('1'),
+    value: {
+      id: like(1),
+      name: like('Inception'),
+      year: like(2010)
+    }
+  })
+
+  // generate: will be returned during mock consumer testing to simulate a valid response.
+  // matcher: will be used to ensure that the provider returns a value that fits the expected pattern
+  // when the contract is verified on the provider side.
+  const matcher = '^movie-(created|updated|deleted)$' // The valid patterns for the event types
+
+  // our consumeMovieEvents has some console.logs which we don't need during tests
+  beforeAll(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('should receive a movie-created event from Kafka', async () => {
+    await messagePact
+      .given('No movies exist')
+      .expectsToReceive('a movie-created event')
+      .withContent({
+        topic: term({ generate: 'movie-created', matcher }),
+        messages
+      })
+      .withMetadata({
+        contentType: 'application/json'
+      })
+      .verify(asynchronousBodyHandler(consumeMovieEvents))
+  })
+
+  it('should receive a movie-updated event from Kafka', async () => {
+    await messagePact
+      .given('An existing movie exists')
+      .expectsToReceive('a movie-updated event')
+      .withContent({
+        topic: term({ generate: 'movie-updated', matcher }),
+        messages
+      })
+      .withMetadata({
+        contentType: 'application/json'
+      })
+      .verify(asynchronousBodyHandler(consumeMovieEvents))
+  })
+
+  it('should receive a movie-deleted event from Kafka', async () => {
+    await messagePact
+      .given('An existing movie exists')
+      .expectsToReceive('a movie-deleted event')
+      .withContent({
+        topic: term({ generate: 'movie-deleted', matcher }),
+        messages
+      })
+      .withMetadata({
+        contentType: 'application/json'
+      })
+      .verify(asynchronousBodyHandler(consumeMovieEvents))
+  })
+})
+
+
+
+================================================
+FILE: src/consumer.test.ts
+================================================
+import nock, { cleanAll } from 'nock'
+import {
+  getMovies,
+  getMovieById,
+  getMovieByName,
+  addMovie,
+  deleteMovieById,
+  updateMovie
+} from './consumer'
+import type { Movie, ErrorResponse } from './consumer'
+import type {
+  DeleteMovieResponse,
+  GetMovieResponse
+} from './provider-schema/movie-types'
+
+// Nock can be used to test modules that make HTTP requests to external APIs in isolation.
+// For example, if a module sends HTTP requests to an external API, you can test that module independently of the actual API.
+
+// Nock can be used to test modules that make HTTP requests to external APIs in isolation.
+// For example, if a module sends HTTP requests to an external API, you can test that module independently of the actual API.
+/*
+Key differences between Nock and Pact:
+
+1) **Error handling**:
+   - **Nock**: You can and should cover error scenarios in your code, regardless of the provider's actual behavior.
+   - **Pact**: You cover error scenarios only if it is important for your consumer contract.
+
+2) **Provider states**:
+   - **Nock**: There are no provider states, as Nock focuses on testing in isolation without interacting with the provider.
+   - **Pact**: Introduces provider states, enabling you to simulate various conditions (e.g., empty or non-empty databases) 
+	 and verify contracts by running tests directly against the provider (at the provider repo, while locally serving the provider).
+
+3) **Response flexibility**:
+   - **Nock**: Mocked responses must be concrete and predefined.
+   - **Pact**: Allows for loose matchers, enabling more flexibility by focusing on the shape of the data rather than exact values.
+*/
+
+const MOCKSERVER_URL = 'http://mockserver.com'
+
+describe('Consumer API functions', () => {
+  afterEach(() => {
+    cleanAll()
+  })
+  const movieWithId: Movie = {
+    id: 1,
+    name: 'My movie',
+    year: 1999,
+    rating: 8.5,
+    director: 'John Doe'
+  }
+  const movieWithoutId: Omit<Movie, 'id'> = {
+    name: 'New movie',
+    year: 1999,
+    rating: 8.5,
+    director: 'John Doe'
+  }
+
+  describe('getMovies, getMovieByName', () => {
+    // this is 1:1 with the pacttest version
+    it('should return all movies', async () => {
+      nock(MOCKSERVER_URL)
+        .get('/movies')
+        .reply(200, { status: 200, data: [movieWithId] })
+
+      const res = await getMovies(MOCKSERVER_URL)
+      expect(res.data).toEqual([movieWithId])
+    })
+
+    // a key difference in nock vs pact is covering the error cases in our code
+    // in reality, the provider never errors; it just returns an empty array,
+    // but our code can handle an error, so we can test it...
+    it('should handle errors correctly', async () => {
+      const errorRes: ErrorResponse = { error: 'Not found' }
+      nock(MOCKSERVER_URL).get('/movies').reply(404, errorRes)
+
+      const res = await getMovies(MOCKSERVER_URL)
+      expect(res).toEqual(errorRes)
+    })
+
+    it('should return a specific movie by name', async () => {
+      nock(MOCKSERVER_URL)
+        .get(`/movies?name=${movieWithId.name}`)
+        .reply(200, { status: 200, data: movieWithId })
+
+      const res = (await getMovieByName(
+        MOCKSERVER_URL,
+        movieWithId.name
+      )) as GetMovieResponse
+      expect(res.data).toEqual(movieWithId)
+    })
+  })
+
+  describe('getMovieById', () => {
+    // this is similar to its pacttest version
+    // a key difference in pact is using provider states, to fully simulate the provider side
+    // in nock, we are not concerned with running our tests against the provider...
+    it('should return a specific movie', async () => {
+      // in pact the provider state would be specified here
+      nock(MOCKSERVER_URL)
+        .get(`/movies/${movieWithId.id}`)
+        .reply(200, { status: 200, data: movieWithId })
+
+      const res = (await getMovieById(
+        MOCKSERVER_URL,
+        movieWithId.id
+      )) as GetMovieResponse
+      expect(res.data).toEqual(movieWithId)
+    })
+
+    it('should handle errors when movie not found', async () => {
+      const testId = 999
+      const errorRes: ErrorResponse = { error: 'Movie not found' }
+      nock(MOCKSERVER_URL).get(`/movies/${testId}`).reply(404, errorRes)
+
+      const result = await getMovieById(MOCKSERVER_URL, testId)
+      expect(result).toEqual(errorRes)
+    })
+  })
+
+  describe('addMovie', () => {
+    // this is similar to its pacttest version
+    it('should add a new movie', async () => {
+      // with pact we can keep the response generic
+      // with nock it has to be concrete response
+      nock(MOCKSERVER_URL)
+        .post('/movies', movieWithoutId)
+        .reply(200, {
+          status: 200,
+          data: {
+            id: 1,
+            ...movieWithoutId
+          }
+        })
+
+      const res = await addMovie(MOCKSERVER_URL, movieWithoutId)
+      expect(res).toEqual({
+        status: 200,
+        data: {
+          id: 1,
+          ...movieWithoutId
+        }
+      })
+    })
+
+    // this is similar to its pacttest version
+    // a key difference in pact is using provider states, to fully simulate the provider side
+    it('should not add a movie that already exists', async () => {
+      const errorRes: ErrorResponse = {
+        error: `Movie ${movieWithoutId.name} already exists`
+      }
+
+      // in pact the provider state would be specified here
+      nock(MOCKSERVER_URL).post('/movies', movieWithoutId).reply(409, errorRes)
+
+      const res = await addMovie(MOCKSERVER_URL, movieWithoutId)
+      expect(res).toEqual(errorRes)
+    })
+  })
+
+  describe('updateMovie', () => {
+    const updatedMovieData = {
+      name: 'Updated movie',
+      year: 2000,
+      rating: 8.5,
+      director: 'Steven Spielberg'
+    }
+    it('should update an existing movie successfully', async () => {
+      const testId = 1
+
+      const EXPECTED_BODY: Movie = {
+        id: testId,
+        ...updatedMovieData
+      }
+
+      nock(MOCKSERVER_URL)
+        .put(`/movies/${testId}`, updatedMovieData)
+        .reply(200, { status: 200, data: EXPECTED_BODY })
+
+      const res = await updateMovie(MOCKSERVER_URL, testId, updatedMovieData)
+      expect(res).toEqual({
+        status: 200,
+        data: EXPECTED_BODY
+      })
+    })
+
+    it('should return an error if movie to update does not exist', async () => {
+      const testId = 999
+      const errorRes: ErrorResponse = {
+        error: `Movie with ID ${testId} no found`
+      }
+
+      nock(MOCKSERVER_URL)
+        .put(`/movies/${testId}`, updatedMovieData)
+        .reply(404, errorRes)
+
+      const res = await updateMovie(MOCKSERVER_URL, testId, updatedMovieData)
+
+      expect(res).toEqual(errorRes)
+    })
+  })
+
+  describe('deleteMovieById', () => {
+    // this is similar to its pacttest version
+    // a key difference in pact is using provider states, to fully simulate the provider side
+    it('should delete an existing movie successfully', async () => {
+      const testId = 100
+      const message = `Movie ${testId} has been deleted`
+
+      // in pact the provider state would be specified here
+      nock(MOCKSERVER_URL)
+        .delete(`/movies/${testId}`)
+        .reply(200, { message, status: 200 })
+
+      const res = (await deleteMovieById(
+        MOCKSERVER_URL,
+        testId
+      )) as DeleteMovieResponse
+      expect(res.message).toEqual(message)
+    })
+
+    it('should throw an error if movie to delete does not exist', async () => {
+      const testId = 123456789
+      const message = `Movie with ID ${testId} not found`
+
+      // in pact the provider state would be specified here
+      nock(MOCKSERVER_URL)
+        .delete(`/movies/${testId}`)
+        .reply(404, { message, status: 404 })
+
+      const res = (await deleteMovieById(
+        MOCKSERVER_URL,
+        testId
+      )) as DeleteMovieResponse
+      expect(res.message).toEqual(message)
+    })
+  })
+})
+
+
+
+================================================
+FILE: src/consumer.ts
+================================================
+import type { AxiosResponse, AxiosError } from 'axios'
+import axios from 'axios'
+import type {
+  ConflictMovieResponse,
+  CreateMovieResponse,
+  DeleteMovieResponse,
+  GetMovieResponse,
+  MovieNotFoundResponse,
+  UpdateMovieResponse
+} from './provider-schema/movie-types'
+
+// Movie type from the provider, in the real world this would come from a published package
+export type Movie = {
+  id: number
+  name: string
+  year: number
+  rating: number
+  director: string
+}
+
+export type ErrorResponse = {
+  error: string
+}
+
+// Helper function to extract data from Axios response
+const yieldData = <T>(res: AxiosResponse<T>): T => res.data
+
+// Helper function to handle errors
+const handleError = (err: AxiosError): ErrorResponse => {
+  if (err.response?.data) return err.response.data as ErrorResponse
+  return { error: 'Unexpected error occurred' }
+}
+
+const generateAuthToken = (): string => `Bearer ${new Date().toISOString()}`
+
+const commonHeaders = {
+  headers: { Authorization: generateAuthToken() }
+}
+
+// Fetch all movies
+export const getMovies = (url: string): Promise<GetMovieResponse> =>
+  axios.get(`${url}/movies`, commonHeaders).then(yieldData).catch(handleError)
+
+// Fetch a single movie by ID
+export const getMovieById = (
+  url: string,
+  id: number
+): Promise<GetMovieResponse | MovieNotFoundResponse> =>
+  axios
+    .get(`${url}/movies/${id}`, commonHeaders)
+    .then(yieldData)
+    .catch(handleError)
+
+export const getMovieByName = (
+  url: string,
+  name: string
+): Promise<GetMovieResponse | MovieNotFoundResponse> =>
+  axios
+    .get(`${url}/movies?name=${encodeURIComponent(name)}`, commonHeaders)
+    .then(yieldData)
+    .catch(handleError)
+
+// Create a new movie
+export const addMovie = (
+  url: string,
+  data: Omit<Movie, 'id'>
+): Promise<CreateMovieResponse | ConflictMovieResponse> =>
+  axios
+    .post(`${url}/movies`, data, commonHeaders)
+    .then(yieldData)
+    .catch(handleError)
+
+// Delete movie by ID
+export const deleteMovieById = (
+  url: string,
+  id: number
+): Promise<DeleteMovieResponse | MovieNotFoundResponse> =>
+  axios
+    .delete(`${url}/movies/${id}`, commonHeaders)
+    .then(yieldData)
+    .catch(handleError)
+
+// Update movie by ID
+export const updateMovie = (
+  url: string,
+  id: number,
+  data: Partial<Omit<Movie, 'id'>>
+): Promise<UpdateMovieResponse | MovieNotFoundResponse> =>
+  axios
+    .put(`${url}/movies/${id}`, data, commonHeaders)
+    .then(yieldData)
+    .catch(handleError)
+
+
+
+================================================
+FILE: src/events/events-listen.ts
+================================================
+// consuming Kafka events is purely optional
+// for them to be seen in action, the provider repo has to be started
+// docker has to be started, and kafka:start script has be executed in the provider repo
+// we have e2e tests in the provider that execute if kafka is up
+// the intent is to test events with pact while no kafka is running
+
+import express from 'express'
+import { consumeMovieEvents } from './movie-events'
+
+const app = express()
+const port = process.env.CLIENTPORT || 3000
+
+// start the Kafka consumer when the application starts
+consumeMovieEvents()
+
+app.listen(port, () => {
+  console.log(`Movie Consumer API listening at http://localhost:${port}`)
+})
+
+
+
+================================================
+FILE: src/events/log-file-path.ts
+================================================
+export const logFilePath = './cypress/movie-events.log'
+
+
+
+================================================
+FILE: src/events/movie-event-types.ts
+================================================
+// these are a copy of the types at the provider/producer
+// in the real world, they would be published as packages and installed here at the consumer
+
+export type MovieAction = 'created' | 'updated' | 'deleted'
+type Event<T extends string> = {
+  topic: `movie-${T}`
+  messages: Array<{
+    key: string // id as string
+    value: string // serialized movie object
+  }>
+}
+export type MovieEvent = Event<MovieAction>
+
+
+
+================================================
+FILE: src/events/movie-events.ts
+================================================
+// consuming Kafka events is purely optional
+// for them to be seen in action, the provider repo has to be started
+// docker has to be started, and kafka:start script has be executed in the provider repo
+// we have e2e tests in the provider that execute if kafka is up
+// the real intent is to test events with pact while no kafka is running
+
+import { Kafka } from 'kafkajs'
+import type { MovieEvent } from './movie-event-types'
+import fs from 'node:fs/promises'
+import { logFilePath } from './log-file-path'
+
+const kafka = new Kafka({
+  clientId: 'movie-consumer',
+  brokers: ['localhost:29092'],
+  // reduce retries and delays
+  retry: {
+    retries: 2, // default 5
+    initialRetryTime: 100, // delay initial (default 300 ms)
+    maxRetryTime: 300 // delay between retries (default 30 secs)
+  }
+})
+
+const consumer = kafka.consumer({ groupId: 'movie-group' })
+
+const logEvent = async (
+  movieEvent: MovieEvent,
+  topic: string,
+  partition: number,
+  logFilePath: string
+) => {
+  console.group('\n Received event from Kafka:')
+  console.log(`Topic: ${topic}`)
+  console.log(`Partition: ${partition}`)
+  console.table(movieEvent)
+  console.groupEnd()
+
+  const eventWithTopic = { ...movieEvent, topic }
+
+  return new Promise<void>((resolve) => {
+    setTimeout(async () => {
+      await fs.appendFile(logFilePath, `${JSON.stringify(eventWithTopic)}\n`)
+      resolve()
+    }, 1000)
+  })
+}
+
+export const consumeMovieEvents = async () => {
+  try {
+    await consumer.connect()
+    console.log('Connected to Kafka successfully \n')
+
+    await consumer.subscribe({ topic: 'movie-created', fromBeginning: true })
+    await consumer.subscribe({ topic: 'movie-updated', fromBeginning: true })
+    await consumer.subscribe({ topic: 'movie-deleted', fromBeginning: true })
+
+    // handle the messages
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const movieEvent: MovieEvent = JSON.parse(
+          message.value?.toString() || '{}'
+        )
+
+        await logEvent(movieEvent, topic, partition, logFilePath)
+      }
+    })
+  } catch (err) {
+    console.error(`\n Kafka broker unavailable, skipping event consumption 
+			\n Kafka is purely optional, but it is there to test events (offline) with Pact. 
+			\n If you want to see Kafka working, start the provider/producer server, 
+			\n start docker desktop, and npm run kafka:start \n`)
+
+    console.error(err instanceof Error ? err.message : 'Unknown error')
+    await consumer.disconnect()
+  }
+}
+
+
+
+================================================
+FILE: src/provider-schema/movie-types.ts
+================================================
+// in the real world, this file which is from the server side
+// would be published in a package and installed here
+
+import type { z } from 'zod'
+import type {
+  CreateMovieResponseSchema,
+  CreateMovieSchema,
+  GetMovieResponseUnionSchema,
+  MovieNotFoundResponseSchema,
+  DeleteMovieResponseSchema,
+  ConflictMovieResponseSchema,
+  UpdateMovieSchema,
+  UpdateMovieResponseSchema
+} from './schema'
+
+export type CreateMovieRequest = z.infer<typeof CreateMovieSchema>
+
+export type CreateMovieResponse = z.infer<typeof CreateMovieResponseSchema>
+
+export type ConflictMovieResponse = z.infer<typeof ConflictMovieResponseSchema>
+
+export type GetMovieResponse = z.infer<typeof GetMovieResponseUnionSchema>
+
+export type MovieNotFoundResponse = z.infer<typeof MovieNotFoundResponseSchema>
+
+export type DeleteMovieResponse = z.infer<typeof DeleteMovieResponseSchema>
+
+export type UpdateMovieRequest = z.infer<typeof UpdateMovieSchema>
+
+export type UpdateMovieResponse = z.infer<typeof UpdateMovieResponseSchema>
+
+
+
+================================================
+FILE: src/provider-schema/schema.ts
+================================================
+// in the real world, this file which is from the server side
+// would be published in a package and installed here
+
+import { z } from 'zod'
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
+
+// Zod Key feature 1: define the schema with Zod (and expand it with zod-to-openapi)
+
+// Generate OpenAPI Docs with Zod step 1) Define Schemas (with zod)
+// Each field is annotated with OpenAPI-specific metadata such as example and description.
+
+// extends Zod with OpenAPI support
+extendZodWithOpenApi(z)
+
+export const CreateMovieSchema = z
+  .object({
+    id: z
+      .number()
+      .int()
+      .optional()
+      .openapi({ example: 1, description: 'Movie ID ' }),
+    name: z
+      .string()
+      .min(1)
+      .openapi({ example: 'Inception', description: 'Movie name' }),
+    year: z
+      .number()
+      .int()
+      .min(1900)
+      .max(2024)
+      .openapi({ example: 2010, description: 'Release year' }),
+    rating: z.number().openapi({ example: 7.5, description: 'Rating' }),
+    director: z.string().min(1).openapi({
+      example: 'Christopher Nolan',
+      description: 'Director'
+    })
+  })
+  .openapi('CreateMovieRequest')
+
+export const CreateMovieResponseSchema = z
+  .object({
+    status: z
+      .number()
+      .int()
+      .openapi({ example: 200, description: 'Response status code' }),
+    data: z.object({
+      id: z.number().int().openapi({ example: 1, description: 'Movie ID' }),
+      name: z
+        .string()
+        .openapi({ example: 'Inception', description: 'Movie name' }),
+      year: z
+        .number()
+        .int()
+        .openapi({ example: 2010, description: 'Release year' }),
+      rating: z.number().openapi({ example: 7.5, description: 'Rating' }),
+      director: z.string().openapi({
+        example: 'Christopher Nolan',
+        description: 'Director'
+      })
+    }),
+    error: z
+      .string()
+      .optional()
+      .openapi({ description: 'Error message, if any' })
+  })
+  .openapi('CreateMovieResponse')
+
+export const ConflictMovieResponseSchema = z.object({
+  status: z
+    .number()
+    .int()
+    .openapi({ example: 409, description: 'Conflict status code' }),
+  error: z
+    .string()
+    .openapi({ example: 'Movie already exists', description: 'Error message' })
+})
+
+const movieObj = {
+  id: z.number().openapi({ example: 1, description: 'Movie ID' }),
+  name: z.string().openapi({ example: 'Inception', description: 'Movie name' }),
+  year: z.number().openapi({ example: 2010, description: 'Release year' }),
+  rating: z.number().openapi({ example: 7.5, description: 'Rating' }),
+  director: z.string().openapi({
+    example: 'Christopher Nolan',
+    description: 'Director'
+  })
+}
+
+export const GetMovieResponseUnionSchema = z
+  .object({
+    status: z
+      .number()
+      .int()
+      .openapi({ example: 200, description: 'Response status code' }),
+    data: z.union([
+      z
+        .object(movieObj)
+        .nullable()
+        .openapi({
+          description: 'Movie details or null if not found',
+          example: {
+            id: 1,
+            name: 'Inception',
+            year: 2010,
+            rating: 7.5,
+            director: 'Christopher Nolan'
+          }
+        }),
+      z.array(z.object(movieObj)).openapi({
+        description: 'List of movies or an empty array if no movies exist',
+        example: []
+      })
+    ]),
+    error: z.string().nullable().optional().openapi({
+      description: 'Error message if an error occurred, otherwise null',
+      example: null
+    })
+  })
+  .openapi('GetMovieResponse')
+
+export const MovieNotFoundResponseSchema = z.object({
+  status: z
+    .number()
+    .int()
+    .openapi({ example: 404, description: 'Response status code' }),
+  error: z
+    .string()
+    .openapi({ example: 'Movie not found', description: 'Error message' })
+})
+
+export const DeleteMovieResponseSchema = z.object({
+  status: z
+    .number()
+    .int()
+    .openapi({ example: 200, description: 'Response status code' }),
+  message: z.string().openapi({
+    example: 'Movie {id} has been deleted',
+    description: 'Success message for the deleted movie'
+  })
+})
+
+export const UpdateMovieSchema = z
+  .object({
+    id: z.number().optional().openapi({ example: 1, description: 'Movie ID' }),
+    name: z
+      .string()
+      .min(1)
+      .optional()
+      .openapi({ example: 'Inception', description: 'Movie name' }),
+    year: z
+      .number()
+      .int()
+      .min(1900)
+      .max(2024)
+      .optional()
+      .openapi({ example: 2010, description: 'Release year' }),
+    rating: z
+      .number()
+      .optional()
+      .openapi({ example: 7.5, description: 'Rating' }),
+    director: z.string().min(1).optional().openapi({
+      example: 'Christopher Nolan',
+      description: 'Director'
+    })
+  })
+  .openapi('UpdateMovieRequest')
+
+export const UpdateMovieResponseSchema = z
+  .object({
+    status: z
+      .number()
+      .int()
+      .openapi({ example: 200, description: 'Response status code' }),
+    data: z
+      .object({
+        id: z.number().openapi({ example: 1, description: 'Movie ID' }),
+        name: z
+          .string()
+          .openapi({ example: 'Inception', description: 'Movie name' }),
+        year: z
+          .number()
+          .openapi({ example: 2010, description: 'Release year' }),
+        rating: z.number().openapi({ example: 7.5, description: 'Rating' }),
+        director: z.string().openapi({
+          example: 'Christopher Nolan',
+          description: 'Director'
+        })
+      })
+      .openapi({ description: 'Updated movie data' }),
+    error: z
+      .string()
+      .optional()
+      .openapi({ description: 'Error message, if any' })
+  })
+  .openapi('UpdatedMovieResponse')
+
+
+
+================================================
+FILE: src/test-helpers/helpers.ts
+================================================
+import type { JsonMap } from '@pact-foundation/pact/src/common/jsonTypes'
+import type { V4ResponseBuilder } from '@pact-foundation/pact/src/v4/http/types'
+
+/**
+ * Converts an object with arbitrary value types to a `JsonMap` where all values are compatible with Pact's expectations.
+ * This is useful for ensuring compatibility with functions that expect all values in the map to be of specific types,
+ * such as in Pact state management.
+ *
+ * The function handles various data types as follows:
+ * - `null` and `undefined`: Converted to the string `"null"`.
+ * - `object`: Serialized using `JSON.stringify` unless it's a Date or Array.
+ * - `number` and `boolean`: Preserved as is, ensuring numeric and boolean types remain unaltered.
+ * - `Date`: Converted to an ISO string format (`toISOString()`).
+ * - `Array`: Preserved in its original form, as arrays should not be converted to strings.
+ *
+ * @param {Record<string, unknown>} obj - The object to convert, with string keys and values of any type.
+ * @returns {JsonMap} - A new object where all values are in a format compatible with Pact.
+ *
+ * @example
+ * const movie = { name: 'Inception', year: 2010, released: new Date(), tags: ['Sci-Fi', 'Thriller'], director: { firstName: 'Christopher', lastName: 'Nolan' } }
+ * toJsonMap(movie) // { name: 'Inception', year: 2010, released: '2024-09-01T12:00:00.000Z', tags: ['Sci-Fi', 'Thriller'], director: '{"firstName":"Christopher","lastName":"Nolan"}' }
+ */
+const toJsonMap = (obj: Record<string, unknown>): JsonMap =>
+  Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => {
+      if (value === null || value === undefined) {
+        return [key, 'null']
+      } else if (
+        typeof value === 'object' &&
+        !(value instanceof Date) &&
+        !Array.isArray(value)
+      ) {
+        return [key, JSON.stringify(value)]
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
+        return [key, value] // Preserve numbers and booleans
+      } else if (value instanceof Date) {
+        return [key, value.toISOString()] // Convert dates to ISO strings
+      } else {
+        return [key, String(value)]
+      }
+    })
+  )
+
+type ProviderStateInput = {
+  name: string
+  params: Record<string, unknown>
+}
+
+/**
+ * Creates a tuple representing a provider state for use with Pact.
+ * The function takes a state name and an object of parameters, converting
+ * the parameters into a JsonMap where all values are strings.
+ *
+ * This function is useful for simplifying the setup of provider states in tests
+ * by ensuring the parameters are in the correct format required by Pact.
+ *
+ * @param {Object} options - The options for creating the provider state.
+ * @param {string} options.name - The name of the provider state.
+ * @param {Record<string, unknown>} options.params - The parameters for the provider state, with string keys and values of any type.
+ *
+ * @returns {[string, JsonMap]} - A tuple containing the state name and the converted parameters.
+ *
+ * @example
+ *  * const movie: Movie = {
+ *   name: 'My existing movie',
+ *   year: 2001
+ * }
+ *
+ * const state = createProviderState({
+ *   name: 'An existing movie exists',
+ *   params: movie
+ * })
+ *
+ * provider.given(...state)
+ *
+ * // OR
+ *
+ * const [stateName, stateParams] = createProviderState({
+ *   name: 'An existing movie exists',
+ *   params: movie
+ * })
+ *
+ * provider.given(stateName, stateParams)
+ */
+export const createProviderState = ({
+  name,
+  params
+}: ProviderStateInput): [string, JsonMap] => [name, toJsonMap(params)]
+
+/**
+ * Utility function to set a JSON body on a Pact V4 response.
+ *
+ * This improves readability using currying and supports any JSON-serializable value.
+ *
+ * @param {unknown} body - The JSON body object to set in the response, which can be any serializable structure.
+ * @returns {(builder: V4ResponseBuilder) => V4ResponseBuilder} - A function to set the JSON body.
+ *
+ * Example usage:
+ * ```js
+ * // Before
+ * .willRespondWith(200, (builder) => builder.jsonBody({
+ *   id: integer(),
+ *   name: string(name),
+ *   year: integer(year)
+ * }))
+ *
+ * // After
+ * .willRespondWith(200, setJsonBody({
+ *   id: integer(),
+ *   name: string(name),
+ *   year: integer(year)
+ * }))
+ * ```
+ */
+export const setJsonBody = (body: unknown) => (builder: V4ResponseBuilder) =>
+  builder.jsonBody(body)
+
+
+
+================================================
+FILE: tests-examples/demo-todo-app.spec.ts
+================================================
+import { test, expect, type Page } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc');
+});
+
+const TODO_ITEMS = [
+  'buy some cheese',
+  'feed the cat',
+  'book a doctors appointment'
+] as const;
+
+test.describe('New Todo', () => {
+  test('should allow me to add todo items', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create 1st todo.
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+
+    // Make sure the list only has one todo item.
+    await expect(page.getByTestId('todo-title')).toHaveText([
+      TODO_ITEMS[0]
+    ]);
+
+    // Create 2nd todo.
+    await newTodo.fill(TODO_ITEMS[1]);
+    await newTodo.press('Enter');
+
+    // Make sure the list now has two todo items.
+    await expect(page.getByTestId('todo-title')).toHaveText([
+      TODO_ITEMS[0],
+      TODO_ITEMS[1]
+    ]);
+
+    await checkNumberOfTodosInLocalStorage(page, 2);
+  });
+
+  test('should clear text input field when an item is added', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create one todo item.
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+
+    // Check that input is empty.
+    await expect(newTodo).toBeEmpty();
+    await checkNumberOfTodosInLocalStorage(page, 1);
+  });
+
+  test('should append new items to the bottom of the list', async ({ page }) => {
+    // Create 3 items.
+    await createDefaultTodos(page);
+
+    // create a todo count locator
+    const todoCount = page.getByTestId('todo-count')
+  
+    // Check test using different methods.
+    await expect(page.getByText('3 items left')).toBeVisible();
+    await expect(todoCount).toHaveText('3 items left');
+    await expect(todoCount).toContainText('3');
+    await expect(todoCount).toHaveText(/3/);
+
+    // Check all items in one call.
+    await expect(page.getByTestId('todo-title')).toHaveText(TODO_ITEMS);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+});
+
+test.describe('Mark all as completed', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should allow me to mark all items as completed', async ({ page }) => {
+    // Complete all todos.
+    await page.getByLabel('Mark all as complete').check();
+
+    // Ensure all todos have 'completed' class.
+    await expect(page.getByTestId('todo-item')).toHaveClass(['completed', 'completed', 'completed']);
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+  });
+
+  test('should allow me to clear the complete state of all items', async ({ page }) => {
+    const toggleAll = page.getByLabel('Mark all as complete');
+    // Check and then immediately uncheck.
+    await toggleAll.check();
+    await toggleAll.uncheck();
+
+    // Should be no completed classes.
+    await expect(page.getByTestId('todo-item')).toHaveClass(['', '', '']);
+  });
+
+  test('complete all checkbox should update state when items are completed / cleared', async ({ page }) => {
+    const toggleAll = page.getByLabel('Mark all as complete');
+    await toggleAll.check();
+    await expect(toggleAll).toBeChecked();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+
+    // Uncheck first todo.
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    await firstTodo.getByRole('checkbox').uncheck();
+
+    // Reuse toggleAll locator and make sure its not checked.
+    await expect(toggleAll).not.toBeChecked();
+
+    await firstTodo.getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+
+    // Assert the toggle all is checked again.
+    await expect(toggleAll).toBeChecked();
+  });
+});
+
+test.describe('Item', () => {
+
+  test('should allow me to mark items as complete', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create two items.
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    // Check first item.
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    await firstTodo.getByRole('checkbox').check();
+    await expect(firstTodo).toHaveClass('completed');
+
+    // Check second item.
+    const secondTodo = page.getByTestId('todo-item').nth(1);
+    await expect(secondTodo).not.toHaveClass('completed');
+    await secondTodo.getByRole('checkbox').check();
+
+    // Assert completed class.
+    await expect(firstTodo).toHaveClass('completed');
+    await expect(secondTodo).toHaveClass('completed');
+  });
+
+  test('should allow me to un-mark items as complete', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create two items.
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    const secondTodo = page.getByTestId('todo-item').nth(1);
+    const firstTodoCheckbox = firstTodo.getByRole('checkbox');
+
+    await firstTodoCheckbox.check();
+    await expect(firstTodo).toHaveClass('completed');
+    await expect(secondTodo).not.toHaveClass('completed');
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    await firstTodoCheckbox.uncheck();
+    await expect(firstTodo).not.toHaveClass('completed');
+    await expect(secondTodo).not.toHaveClass('completed');
+    await checkNumberOfCompletedTodosInLocalStorage(page, 0);
+  });
+
+  test('should allow me to edit an item', async ({ page }) => {
+    await createDefaultTodos(page);
+
+    const todoItems = page.getByTestId('todo-item');
+    const secondTodo = todoItems.nth(1);
+    await secondTodo.dblclick();
+    await expect(secondTodo.getByRole('textbox', { name: 'Edit' })).toHaveValue(TODO_ITEMS[1]);
+    await secondTodo.getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await secondTodo.getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    // Explicitly assert the new text value.
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2]
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+});
+
+test.describe('Editing', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should hide other controls when editing', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item').nth(1);
+    await todoItem.dblclick();
+    await expect(todoItem.getByRole('checkbox')).not.toBeVisible();
+    await expect(todoItem.locator('label', {
+      hasText: TODO_ITEMS[1],
+    })).not.toBeVisible();
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should save edits on blur', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).dispatchEvent('blur');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2],
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+
+  test('should trim entered text', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('    buy some sausages    ');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2],
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+
+  test('should remove the item if an empty text string was entered', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      TODO_ITEMS[2],
+    ]);
+  });
+
+  test('should cancel edits on escape', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Escape');
+    await expect(todoItems).toHaveText(TODO_ITEMS);
+  });
+});
+
+test.describe('Counter', () => {
+  test('should display the current number of todo items', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+    
+    // create a todo count locator
+    const todoCount = page.getByTestId('todo-count')
+
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+
+    await expect(todoCount).toContainText('1');
+
+    await newTodo.fill(TODO_ITEMS[1]);
+    await newTodo.press('Enter');
+    await expect(todoCount).toContainText('2');
+
+    await checkNumberOfTodosInLocalStorage(page, 2);
+  });
+});
+
+test.describe('Clear completed button', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+  });
+
+  test('should display the correct text', async ({ page }) => {
+    await page.locator('.todo-list li .toggle').first().check();
+    await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();
+  });
+
+  test('should remove completed items when clicked', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Clear completed' }).click();
+    await expect(todoItems).toHaveCount(2);
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[2]]);
+  });
+
+  test('should be hidden when there are no items that are completed', async ({ page }) => {
+    await page.locator('.todo-list li .toggle').first().check();
+    await page.getByRole('button', { name: 'Clear completed' }).click();
+    await expect(page.getByRole('button', { name: 'Clear completed' })).toBeHidden();
+  });
+});
+
+test.describe('Persistence', () => {
+  test('should persist its data', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    const todoItems = page.getByTestId('todo-item');
+    const firstTodoCheck = todoItems.nth(0).getByRole('checkbox');
+    await firstTodoCheck.check();
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[1]]);
+    await expect(firstTodoCheck).toBeChecked();
+    await expect(todoItems).toHaveClass(['completed', '']);
+
+    // Ensure there is 1 completed item.
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    // Now reload.
+    await page.reload();
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[1]]);
+    await expect(firstTodoCheck).toBeChecked();
+    await expect(todoItems).toHaveClass(['completed', '']);
+  });
+});
+
+test.describe('Routing', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    // make sure the app had a chance to save updated todos in storage
+    // before navigating to a new view, otherwise the items can get lost :(
+    // in some frameworks like Durandal
+    await checkTodosInLocalStorage(page, TODO_ITEMS[0]);
+  });
+
+  test('should allow me to display active items', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item');
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Active' }).click();
+    await expect(todoItem).toHaveCount(2);
+    await expect(todoItem).toHaveText([TODO_ITEMS[0], TODO_ITEMS[2]]);
+  });
+
+  test('should respect the back button', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item'); 
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    await test.step('Showing all items', async () => {
+      await page.getByRole('link', { name: 'All' }).click();
+      await expect(todoItem).toHaveCount(3);
+    });
+
+    await test.step('Showing active items', async () => {
+      await page.getByRole('link', { name: 'Active' }).click();
+    });
+
+    await test.step('Showing completed items', async () => {
+      await page.getByRole('link', { name: 'Completed' }).click();
+    });
+
+    await expect(todoItem).toHaveCount(1);
+    await page.goBack();
+    await expect(todoItem).toHaveCount(2);
+    await page.goBack();
+    await expect(todoItem).toHaveCount(3);
+  });
+
+  test('should allow me to display completed items', async ({ page }) => {
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Completed' }).click();
+    await expect(page.getByTestId('todo-item')).toHaveCount(1);
+  });
+
+  test('should allow me to display all items', async ({ page }) => {
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Active' }).click();
+    await page.getByRole('link', { name: 'Completed' }).click();
+    await page.getByRole('link', { name: 'All' }).click();
+    await expect(page.getByTestId('todo-item')).toHaveCount(3);
+  });
+
+  test('should highlight the currently applied filter', async ({ page }) => {
+    await expect(page.getByRole('link', { name: 'All' })).toHaveClass('selected');
+    
+    //create locators for active and completed links
+    const activeLink = page.getByRole('link', { name: 'Active' });
+    const completedLink = page.getByRole('link', { name: 'Completed' });
+    await activeLink.click();
+
+    // Page change - active items.
+    await expect(activeLink).toHaveClass('selected');
+    await completedLink.click();
+
+    // Page change - completed items.
+    await expect(completedLink).toHaveClass('selected');
+  });
+});
+
+async function createDefaultTodos(page: Page) {
+  // create a new todo locator
+  const newTodo = page.getByPlaceholder('What needs to be done?');
+
+  for (const item of TODO_ITEMS) {
+    await newTodo.fill(item);
+    await newTodo.press('Enter');
+  }
+}
+
+async function checkNumberOfTodosInLocalStorage(page: Page, expected: number) {
+  return await page.waitForFunction(e => {
+    return JSON.parse(localStorage['react-todos']).length === e;
+  }, expected);
+}
+
+async function checkNumberOfCompletedTodosInLocalStorage(page: Page, expected: number) {
+  return await page.waitForFunction(e => {
+    return JSON.parse(localStorage['react-todos']).filter((todo: any) => todo.completed).length === e;
+  }, expected);
+}
+
+async function checkTodosInLocalStorage(page: Page, title: string) {
+  return await page.waitForFunction(t => {
+    return JSON.parse(localStorage['react-todos']).map((todo: any) => todo.title).includes(t);
+  }, title);
+}
+
+
+
+================================================
+FILE: .github/PULL_REQUEST_TEMPLATE.md
+================================================
+### Pact Breaking Change?
+
+- [ ] Pact breaking change (check if this PR introduces a breaking change, which relaxes Pact verification to only run vs the matching branch of the consumer).
+
+
+
+================================================
+FILE: .github/workflows/contract-test.yml
+================================================
+name: Run contract tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches:
+      - main
+
+# if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+  PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+  GITHUB_SHA: ${{ github.sha }}
+  GITHUB_BRANCH: ${{ github.head_ref }}
+
+jobs:
+  contract-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }} # Ensure you're on the correct branch
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set PACT_BREAKING_CHANGE based on PR description checkbox
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            if (prBody.includes('[x] Pact breaking change')) {
+              core.exportVariable('PACT_BREAKING_CHANGE', 'true');
+              console.log('PACT_BREAKING_CHANGE set to true based on PR description checkbox.');
+            } else {
+              core.exportVariable('PACT_BREAKING_CHANGE', 'false');
+              console.log('PACT_BREAKING_CHANGE remains false.');
+            }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run consumer contract tests
+        run: npm run test:consumer
+
+      - name: Publish contract to Pactflow
+        run: npm run publish:pact
+
+      # a web hook is triggered on the provider
+      # which executes the provider tests
+
+      - name: Can I deploy consumer?
+        if: env.PACT_BREAKING_CHANGE != 'true'
+        run: npm run can:i:deploy:consumer
+
+      - name: Record web consumer deployment
+        if: github.ref == 'refs/heads/main'
+        run: npm run record:consumer:deployment --env=dev
+
+
+
+================================================
+FILE: .github/workflows/e2e-test-cy.yml
+================================================
+name: Run e2e tests with cy
+on:
+  pull_request:
+  workflow_dispatch:
+
+# if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: 'file:./dev.db'
+  SERVERPORT: 3001
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+jobs:
+  cy-e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cypress e2e tests 🧪
+        uses: cypress-io/github-action@v6.10.2
+        with:
+          start: npm run mock:server
+          config-file: cypress/config/local.config.ts
+          record: true
+          group: local
+          tag: local
+
+
+
+================================================
+FILE: .github/workflows/e2e-test-pw.yml
+================================================
+name: Run e2e tests with pw
+on:
+  push:
+  workflow_dispatch:
+
+# if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DATABASE_URL: 'file:./dev.db'
+  SERVERPORT: 3001
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  pw-e2e-test:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium Only
+        run: npx playwright install chromium
+
+      - name: Run Playwright tests
+        run: npm run pw:run-local
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+
+
+
+================================================
+FILE: .github/workflows/merge-gatekeeper.yml
+================================================
+name: Merge Gatekeeper
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+================================================
+FILE: .github/workflows/pr-checks.yml
+================================================
+name: Run PR checks
+on:
+  pull_request:
+  workflow_dispatch:
+
+# if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run unit test
+        run: npm run test
+
+

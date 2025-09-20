@@ -1,0 +1,5663 @@
+Directory structure:
+└── muratkeremozcan-cy-vs-pw-murats-version/
+    ├── README.md
+    ├── analytics.js
+    ├── app.js
+    ├── cypress.config.js
+    ├── data.json
+    ├── index.html
+    ├── package.json
+    ├── playwright.config.js
+    ├── renovate.json
+    ├── reset-db.js
+    ├── tsconfig.json
+    ├── .eslintignore
+    ├── .eslintrc.cjs
+    ├── .npmrc
+    ├── .nvmrc
+    ├── .prettierrc.json
+    ├── @types/
+    │   └── todo.ts
+    ├── cypress/
+    │   ├── e2e/
+    │   │   ├── add.cy.js
+    │   │   ├── clock.cy.js
+    │   │   ├── complete.cy.js
+    │   │   ├── delete-items.cy.js
+    │   │   ├── labels.cy.js
+    │   │   ├── local-storage.cy.js
+    │   │   ├── routing.cy.js
+    │   │   ├── shows-items-test-step-version.cy.js
+    │   │   ├── shows-items.cy.js
+    │   │   ├── spy-on-console.cy.js
+    │   │   ├── spy-window-property.cy.js
+    │   │   ├── test-isolation-false.cy.js
+    │   │   ├── todos-sort.cy.js
+    │   │   ├── todos-uncertain-number.cy.js
+    │   │   ├── window-property-apptodos.cy.js
+    │   │   ├── api-e2e/
+    │   │   │   └── crud-todo.cy.js
+    │   │   └── network/
+    │   │       ├── load-error-spy-on-console.cy.js
+    │   │       ├── load.cy.js
+    │   │       ├── modify-server-response.cy.js
+    │   │       ├── same-response.cy.js
+    │   │       ├── spy-on-math-random.cy.js
+    │   │       ├── stub-3-ways.cy.js
+    │   │       ├── todos-compare.cy.js
+    │   │       ├── todos-delete.cy.js
+    │   │       ├── todos-spy-and-add.cy.js
+    │   │       ├── todos-spy.cy.js
+    │   │       └── todos-stub.cy.js
+    │   └── support/
+    │       ├── commands.js
+    │       └── e2e.js
+    ├── fixtures/
+    │   ├── one.json
+    │   ├── three.json
+    │   └── two.json
+    ├── pw/
+    │   ├── add_KEY_hasText_failOnPageError.spec.ts
+    │   ├── clock_KEY.spec.ts
+    │   ├── complete-no-fixtures_KEY_toHaveText_toHaveClass_array.spec.ts
+    │   ├── delete-items-ramda.spec.ts
+    │   ├── delete-items_KEY_helperFn.spec.ts
+    │   ├── labels_KEY_count.spec.ts
+    │   ├── local-storage_KEY_page_evaluate.spec.ts
+    │   ├── routing.spec.ts
+    │   ├── shows-items-test-step-version.spec.ts
+    │   ├── shows-items.spec.ts
+    │   ├── spy-on-console_KEY_toContainEqual_toPass_waitFor.spec.ts
+    │   ├── spy-window-property_pageEvaluate_pageWaitForFunction.spec.ts
+    │   ├── test-isolation-false.spec.ts
+    │   ├── todos-sort_KEY_allTextContents_toPass.spec.ts
+    │   ├── todos-uncertain-number_KEY_toHaveCountAbove_poll_toPass.spec.ts
+    │   ├── window-propery-apptodos_KEY_pageEvaluate_window_OmitOpposite.spec.ts
+    │   ├── api-e2e/
+    │   │   ├── crud-todo-helper-version.spec.ts
+    │   │   └── crud-todo.spec.js
+    │   ├── network/
+    │   │   ├── load-error-spy-on-console_KEY_toPass_spyOn.spec.ts
+    │   │   ├── load_KEY_waitFor-state-visible.spec.ts
+    │   │   ├── modify-server-response_KEY_toPass.spec.ts
+    │   │   ├── same-response.spec.ts
+    │   │   ├── spy-on-math-random_KEY_pageEvaluate_MathRandom.spec.ts
+    │   │   ├── stub-3-ways.spec.ts
+    │   │   ├── todos-compare.spec.ts
+    │   │   ├── todos-delete_KEY_hasText_hover_not_toBeAttached.spec.ts
+    │   │   ├── todos-spy-and-add-network-helper-version.spec.ts
+    │   │   ├── todos-spy-and-add.spec.ts
+    │   │   ├── todos-spy-network-helper-version.spec.ts
+    │   │   ├── todos-spy.spec.ts
+    │   │   ├── todos-stub-network-helper-version.spec.ts
+    │   │   └── todos-stub.spec.ts
+    │   └── support/
+    │       ├── fixtures.ts
+    │       ├── fixture-helpers/
+    │       │   └── plain-functions.ts
+    │       ├── fixtures/
+    │       │   ├── api-request-fixture.ts
+    │       │   ├── base-fixtures.ts
+    │       │   ├── network-fixture.ts
+    │       │   └── ui-fixtures.ts
+    │       ├── ui-helpers/
+    │       │   ├── add-todo.ts
+    │       │   └── reset-and-visit.ts
+    │       └── utils/
+    │           ├── network.ts
+    │           └── spy-stub-helper.ts
+    ├── tests-examples/
+    │   └── demo-todo-app.spec.js
+    └── .github/
+        └── workflows/
+            ├── cypress.yml
+            ├── merge-gatekeeper.yml
+            ├── playwright.yml
+            └── pr-checks.yml
+
+================================================
+FILE: README.md
+================================================
+# Cypress vs Playwright TodoMVC example app
+
+```bash
+npm i
+npm start
+
+#
+npm run cy:open
+npm run cy:run
+
+npm run pw:open
+npm run pw:run
+
+```
+
+
+
+================================================
+FILE: analytics.js
+================================================
+// example analytics lib
+window.track = (eventName) => {
+  console.log('tracking event "%s"', eventName)
+}
+window.addEventListener('load', () => {
+  track('window.load')
+})
+
+
+
+================================================
+FILE: app.js
+================================================
+/* global Vue, Vuex, axios, track */
+/* eslint-disable no-console */
+/* eslint-disable-next-line */
+const uri = window.location.search.substring(1)
+const params = new URLSearchParams(uri)
+const appStartDelay = parseFloat(params.get('appStartDelay') || '0')
+
+function appStart() {
+  Vue.use(Vuex)
+
+  function randomId() {
+    return Math.random().toString().substr(2, 10)
+  }
+
+  /**
+   * When adding new todo items, we can force the delay by using
+   * the URL query parameter `addTodoDelay=<ms>`.
+   */
+  let addTodoDelay = 0
+
+  const store = new Vuex.Store({
+    state: {
+      loading: false,
+      todos: [],
+      newTodo: '',
+      delay: 0,
+    },
+    getters: {
+      newTodo: (state) => state.newTodo,
+      todos: (state) => state.todos,
+      loading: (state) => state.loading,
+    },
+    mutations: {
+      SET_DELAY(state, delay) {
+        state.delay = delay
+      },
+      SET_RENDER_DELAY(state, ms) {
+        state.renderDelay = ms
+      },
+      SET_LOADING(state, flag) {
+        state.loading = flag
+
+        if (flag === false) {
+          // an easy way for the application to signal
+          // that it is done loading
+          document.body.classList.add('loaded')
+        }
+      },
+      SET_TODOS(state, todos) {
+        state.todos = todos
+        // expose the todos via the global "window" object
+        window.appTodos = structuredClone(todos)
+        window.appTodos.forEach((todo) => {
+          // each todo will have a reference to the parent list
+          todo.list = window.appTodos
+        })
+        // save the todos to the local storage
+        localStorage.setItem('todos', JSON.stringify(todos))
+      },
+      SET_NEW_TODO(state, todo) {
+        state.newTodo = todo
+      },
+      ADD_TODO(state, todoObject) {
+        state.todos.push(todoObject)
+      },
+      REMOVE_TODO(state, todo) {
+        let todos = state.todos
+        todos.splice(todos.indexOf(todo), 1)
+      },
+      CLEAR_NEW_TODO(state) {
+        state.newTodo = ''
+      },
+    },
+    actions: {
+      setDelay({ commit }, delay) {
+        commit('SET_DELAY', delay)
+      },
+      setRenderDelay({ commit }, ms) {
+        commit('SET_RENDER_DELAY', ms)
+      },
+
+      loadTodos({ commit, state }) {
+        console.log('loadTodos start, delay is %d', state.delay)
+        setTimeout(() => {
+          commit('SET_LOADING', true)
+
+          axios
+            .get('/todos')
+            .then((r) => r.data)
+            .then((todos) => {
+              setTimeout(() => {
+                commit('SET_TODOS', todos)
+              }, state.renderDelay)
+            })
+            .catch((e) => {
+              console.error('could not load todos')
+              console.error(e.message)
+              console.error(e.response.data)
+            })
+            .finally(() => {
+              setTimeout(() => {
+                commit('SET_LOADING', false)
+              }, state.renderDelay)
+            })
+        }, state.delay)
+      },
+
+      /**
+       * Sets text for the future todo
+       *
+       * @param {any} { commit }
+       * @param {string} todo Message
+       */
+      setNewTodo({ commit }, todo) {
+        commit('SET_NEW_TODO', todo)
+      },
+      addTodo({ commit, state }, newTodo) {
+        const title = state.newTodo || newTodo
+        if (!title) {
+          // do not add empty todos
+          return
+        }
+        const todo = {
+          title,
+          completed: false,
+          id: randomId(),
+        }
+        // artificial delay in the application
+        // for test "flaky test - can pass or not depending on the app's speed"
+        // in cypress/integration/08-retry-ability/answer.js
+        // increase the timeout delay to make the test fail
+        // 50ms should be good
+        setTimeout(() => {
+          track('todo.add', title)
+          axios.post('/todos', todo).then(() => {
+            commit('ADD_TODO', todo)
+          })
+        }, addTodoDelay)
+      },
+      addEntireTodo({ commit }, todoFields) {
+        const todo = {
+          ...todoFields,
+          id: randomId(),
+        }
+        axios.post('/todos', todo).then(() => {
+          commit('ADD_TODO', todo)
+        })
+      },
+      removeTodo({ commit }, todo) {
+        track('todo.remove', todo.title)
+
+        axios.delete(`/todos/${todo.id}`).then(() => {
+          console.log('removed todo', todo.id, 'from the server')
+          commit('REMOVE_TODO', todo)
+        })
+      },
+      async removeCompleted({ commit, state }) {
+        const remainingTodos = state.todos.filter((todo) => !todo.completed)
+        const completedTodos = state.todos.filter((todo) => todo.completed)
+
+        for (const todo of completedTodos) {
+          await axios.delete(`/todos/${todo.id}`)
+        }
+        commit('SET_TODOS', remainingTodos)
+      },
+      clearNewTodo({ commit }) {
+        commit('CLEAR_NEW_TODO')
+      },
+      // example promise-returning action
+      addTodoAfterDelay({ commit }, { milliseconds, title }) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const todo = {
+              title,
+              completed: false,
+              id: randomId(),
+            }
+            commit('ADD_TODO', todo)
+            resolve()
+          }, milliseconds)
+        })
+      },
+    },
+  })
+
+  // a few helper utilities
+  const filters = {
+    all: function (todos) {
+      return todos
+    },
+    active: function (todos) {
+      return todos.filter(function (todo) {
+        return !todo.completed
+      })
+    },
+    completed: function (todos) {
+      return todos.filter(function (todo) {
+        return todo.completed
+      })
+    },
+  }
+
+  // app Vue instance
+  const app = new Vue({
+    store,
+    data: {
+      file: null,
+      visibility: 'all',
+    },
+    el: '.todoapp',
+
+    created() {
+      const delay = parseFloat(params.get('delay') || '0')
+      const renderDelay = parseFloat(params.get('renderDelay') || '0')
+      addTodoDelay = parseFloat(params.get('addTodoDelay') || '1000')
+
+      this.$store.dispatch('setRenderDelay', renderDelay).then(() => {
+        this.$store.dispatch('setDelay', delay).then(() => {
+          this.$store.dispatch('loadTodos')
+        })
+      })
+
+      // how would you test the periodic loading of todos?
+      setInterval(() => {
+        this.$store.dispatch('loadTodos')
+      }, 60000)
+    },
+
+    // computed properties
+    // https://vuejs.org/guide/computed.html
+    computed: {
+      loading() {
+        return this.$store.getters.loading
+      },
+      newTodo() {
+        return this.$store.getters.newTodo
+      },
+      todos() {
+        return this.$store.getters.todos
+      },
+      filteredTodos() {
+        return filters[this.visibility](this.$store.getters.todos)
+      },
+      remaining() {
+        return this.$store.getters.todos.filter((todo) => !todo.completed)
+          .length
+      },
+    },
+
+    // methods that implement data logic.
+    // note there's no DOM manipulation here at all.
+    methods: {
+      pluralize: function (word, count) {
+        return word + (count === 1 ? '' : 's')
+      },
+
+      setNewTodo(e) {
+        this.$store.dispatch('setNewTodo', e.target.value)
+      },
+
+      addTodo(e) {
+        // do not allow adding empty todos
+        if (!e.target.value.trim()) {
+          throw new Error('Cannot add a blank todo')
+        }
+        e.target.value = ''
+        this.$store.dispatch('addTodo')
+        this.$store.dispatch('clearNewTodo')
+      },
+
+      removeTodo(todo) {
+        this.$store.dispatch('removeTodo', todo)
+      },
+
+      // utility method for create a todo with title and completed state
+      addEntireTodo(title, completed = false) {
+        this.$store.dispatch('addEntireTodo', { title, completed })
+      },
+
+      removeCompleted() {
+        this.$store.dispatch('removeCompleted')
+      },
+    },
+  })
+
+  // use the Router from the vendor/director.js library
+  ;(function (app, Router) {
+    'use strict'
+
+    var router = new Router()
+
+    ;['all', 'active', 'completed'].forEach(function (visibility) {
+      router.on(visibility, function () {
+        app.visibility = visibility
+      })
+    })
+
+    router.configure({
+      notfound: function () {
+        window.location.hash = ''
+        app.visibility = 'all'
+      },
+    })
+
+    router.init()
+  })(app, Router)
+
+  // if you want to expose "app" globally only
+  // during end-to-end tests you can guard it using "window.Cypress" flag
+  // if (window.Cypress) {
+  window.app = app
+  // }
+}
+
+if (appStartDelay > 0) {
+  setTimeout(appStart, appStartDelay)
+} else {
+  appStart()
+}
+
+
+
+================================================
+FILE: cypress.config.js
+================================================
+const { defineConfig } = require('cypress')
+
+module.exports = defineConfig({
+  e2e: {
+    baseUrl: 'http://localhost:3000',
+    fixturesFolder: './fixtures',
+    setupNodeEvents(on, config) {
+      // implement node event listeners here
+    },
+  },
+})
+
+
+
+================================================
+FILE: data.json
+================================================
+{
+  "todos": [
+    {
+      "title": "Write code $1",
+      "completed": false,
+      "id": "1"
+    },
+    {
+      "title": "Write tests $4",
+      "completed": true,
+      "id": "2"
+    },
+    {
+      "title": "Make tests pass $59",
+      "completed": false,
+      "id": "3"
+    }
+  ]
+}
+
+
+
+================================================
+FILE: index.html
+================================================
+<!doctype html>
+<html data-framework="vue">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="author" content="Gleb Bahmutov" />
+    <meta
+      name="description"
+      content="Cypress vs Playwright TodoMVC example app"
+    />
+    <title>cy-vs-pw-example-todomvc</title>
+    <link rel="stylesheet" href="vendor/index.css" />
+    <!-- usually we can just let the browser load additional styles if the user's OS
+    has preference for dark theme
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="vendor/dark.css">
+  -->
+    <!-- but to be able to control the dark theme load programmatically and from E2E tests
+    we need to use JavaScript and check preference using "window.matchMedia" call -->
+    <script>
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        const link = document.createElement('link')
+        link.type = 'text/css'
+        link.rel = 'stylesheet'
+        link.href = 'vendor/dark.css'
+        document.head.appendChild(link)
+      }
+    </script>
+    <style>
+      [v-cloak] {
+        display: none;
+      }
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .loading {
+        padding: 1em;
+        font-size: larger;
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="todoapp">
+      <header class="header">
+        <h1 data-cy="app-title">todos</h1>
+        <input
+          class="new-todo"
+          autofocus
+          autocomplete="off"
+          placeholder="What needs to be done?"
+          :value="newTodo"
+          @input="setNewTodo"
+          @keyup.enter="addTodo"
+        />
+      </header>
+      <section class="main" v-show="todos.length">
+        <ul class="todo-list">
+          <li
+            v-for="todo in filteredTodos"
+            class="todo"
+            :key="todo.id"
+            :class="{ completed: todo.completed }"
+          >
+            <div class="view">
+              <input class="toggle" type="checkbox" v-model="todo.completed" />
+              <label>{{ todo.title }}</label>
+              <button class="destroy" @click="removeTodo(todo)"></button>
+            </div>
+          </li>
+        </ul>
+      </section>
+      <div class="loading-container">
+        <div class="loading" v-show="loading">Loading data ...</div>
+      </div>
+
+      <footer class="footer" v-show="todos.length">
+        <span class="todo-count">
+          <strong v-text="remaining" data-cy="remaining-count"></strong>
+          {{pluralize('item', remaining)}} left
+        </span>
+        <ul class="filters">
+          <li>
+            <a
+              data-cy="filter-all"
+              href="#/all"
+              :class="{selected: visibility == 'all'}"
+              >All</a
+            >
+          </li>
+          <li>
+            <a
+              data-cy="filter-active"
+              href="#/active"
+              :class="{selected: visibility == 'active'}"
+              >Active</a
+            >
+          </li>
+          <li>
+            <a
+              data-cy="filter-completed"
+              href="#/completed"
+              :class="{selected: visibility == 'completed'}"
+              >Completed</a
+            >
+          </li>
+        </ul>
+        <button
+          class="clear-completed"
+          @click="removeCompleted"
+          v-show="todos.length > remaining"
+        >
+          Clear completed
+        </button>
+      </footer>
+    </section>
+    <footer class="info">
+      <p>cy-vs-pw-example-todomvc</p>
+      <p>
+        <a href="https://cypress.tips/courses/cypress-vs-playwright"
+          >Cypress vs Playwright</a
+        >
+        course
+      </p>
+    </footer>
+
+    <script src="vendor/polyfill.min.js"></script>
+    <script src="vendor/director.js"></script>
+    <script src="vendor/vue.js"></script>
+    <script src="vendor/vuex.js"></script>
+    <script src="vendor/axios.min.js"></script>
+    <script src="app.js"></script>
+
+    <!-- dummy analytics library that calls "window.track()" on load -->
+    <script src="analytics.js"></script>
+  </body>
+</html>
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "cy-vs-pw-example-todomvc",
+  "version": "1.0.0",
+  "description": "Cypress vs Playwright TodoMVC example app",
+  "main": "index.js",
+  "author": "Murat Ozcan <muratkerem@gmail.com>",
+  "scripts": {
+    "start": "json-server --static . --watch data.json --middlewares ./node_modules/json-server-reset",
+    "reset": "node reset-db.js",
+    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|json|css|md|mdx|html)\"",
+    "lint": "eslint . --cache-location node_modules/.cache/eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "cy:open": "cypress open --e2e --browser chrome",
+    "cy:run": "cypress run --e2e --browser chrome",
+    "cy:run-fast": "cypress run --e2e --browser chrome --config video=false screenshot=false",
+    "cy:open-ct": "cypress open --component --browser chrome",
+    "cy:run-ct": "cypress run --component --browser chrome",
+    "cy:run-ct-fast": "npm run cy:run-ct --config video=false screenshot=false",
+    "pw:open": "npx playwright test --ui",
+    "pw:open-debug": "PWDEBUG=1 npx playwright test --ui",
+    "pw:run": "npx playwright test",
+    "pw:run-trace": "npx playwright test --trace on && npx playwright show-report",
+    "pw:open-trace": "npx playwright show-trace",
+    "pw:clear": "rm -rf test-results playwright-report playwright/.cache"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "dependencies": {
+    "json-server": "0.17.4",
+    "json-server-reset": "1.6.4",
+    "ramda": "0.30.1"
+  },
+  "devDependencies": {
+    "@bahmutov/cy-api": "^2.2.6",
+    "@playwright/test": "1.52.0",
+    "@types/node": "22.15.30",
+    "@types/picomatch": "^4.0.0",
+    "cy-spok": "1.6.2",
+    "cypress": "14.4.1",
+    "cypress-map": "1.48.1",
+    "cypress-real-events": "1.14.0",
+    "is-ci": "^4.0.0",
+    "picomatch": "^4.0.2",
+    "prettier": "3.5.3",
+    "typescript": "^5.7.2",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-import-resolver-typescript": "4.4.3",
+    "eslint-plugin-cypress": "3.6.0",
+    "eslint-plugin-implicit-dependencies": "1.1.1",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-no-only-tests": "3.3.0",
+    "eslint-plugin-prettier": "5.4.1",
+    "@typescript-eslint/eslint-plugin": "8.33.1",
+    "@typescript-eslint/parser": "8.33.1"
+  }
+}
+
+
+
+================================================
+FILE: playwright.config.js
+================================================
+// @ts-check
+const { defineConfig, devices } = require('@playwright/test')
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+// require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
+/**
+ * @see https://playwright.dev/docs/test-configuration
+ */
+module.exports = defineConfig({
+  testDir: './pw',
+  testMatch: '**/*.spec.*s',
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 4 : 3,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: 'html',
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: 'http://localhost:3000',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+  },
+
+  /* Run your local dev server before starting the tests */
+  webServer: {
+    command: 'npm run start',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    // if you want to see the output from the started web server
+    stdout: 'pipe',
+  },
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
+
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
+
+    /* Test against branded browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    // },
+    // {
+    //   name: 'Google Chrome',
+    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    // },
+  ],
+})
+
+
+
+================================================
+FILE: renovate.json
+================================================
+{
+  "extends": ["config:base"],
+  "automerge": true,
+  "prHourlyLimit": 2,
+  "updateNotScheduled": false,
+  "timezone": "America/New_York",
+  "schedule": ["after 10pm and before 5am on every weekday", "every weekend"],
+  "masterIssue": true,
+  "labels": ["type: dependencies", "renovate"],
+  "dependencyDashboardApproval": false,
+  "packageRules": [
+    {
+      "groupName": "All Minor and Patch Updates",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}
+
+
+
+================================================
+FILE: reset-db.js
+================================================
+const write = require('fs').writeFileSync
+
+const resetDatabase = () => {
+  // for complex resets can use NPM script command
+  // cy.exec('npm run reset:database')
+
+  // for simple cases, can just overwrite the data file
+  const data = {
+    todos: []
+  }
+  const str = JSON.stringify(data, null, 2) + '\n'
+  write('./data.json', str)
+}
+
+resetDatabase()
+
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "include": [".eslintrc.cjs", "pw", "playwright.config.js", "@types"],
+  "exclude": [
+    "vendor",
+    "node_modules",
+    "coverage",
+    "dist",
+    "**/*.*test.ts*",
+    "playwright-report"
+  ],
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+    /* Projects */
+    // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
+    // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
+    // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
+    // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
+    // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
+    // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
+    /* Language and Environment */
+    "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx" /* Specify what JSX code is generated. */,
+    // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
+    // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
+    // "jsxFactory": "",                                 /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
+    // "jsxFragmentFactory": "",                         /* Specify the JSX Fragment reference used for fragments when targeting React JSX emit e.g. 'React.Fragment' or 'Fragment'. */
+    // "jsxImportSource": "",                            /* Specify module specifier used to import the JSX factory functions when using 'jsx: react-jsx*'. */
+    // "reactNamespace": "",                             /* Specify the object invoked for 'createElement'. This only applies when targeting 'react' JSX emit. */
+    // "noLib": true,                                    /* Disable including any library files, including the default lib.d.ts. */
+    // "useDefineForClassFields": true,                  /* Emit ECMAScript-standard-compliant class fields. */
+    // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
+    /* Modules */
+    "module": "ESNext" /* Specify what module code is generated. */,
+    // "rootDir": "./",                                  /* Specify the root folder within your source files. */
+    "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
+    "baseUrl": "./" /* Specify the base directory to resolve non-relative module names. */,
+    "paths": {
+      "@components/*": ["./src/components/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@cypress/*": ["./cypress/*"],
+      "@pw/*": ["./pw/*"],
+      "@support/*": ["./cypress/support/*"],
+      "@fixtures/*": ["./cypress/fixtures/*"],
+      "@provider-schema/*": ["./src/provider-schema/*"],
+      "@vitest-utils/*": ["./src/test-utils/vitest-utils/*"]
+    } /* Specify a set of entries that re-map imports to additional lookup locations. */,
+    // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
+    // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
+    // "types": [
+    // ] /* Specify type package names to be included without being referenced in a source file. */, // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
+    // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
+    "resolveJsonModule": true /* Enable importing .json files. */,
+    // "allowImportingTsExtensions": true                /* Allow importing .ts files even when they cannot be resolved. */
+    // "noResolve": true,                                /* Disallow 'import's, 'require's or '<reference>'s from expanding the number of files TypeScript should add to a project. */
+    /* JavaScript Support */
+    "allowJs": true /* Allow JavaScript files to be a part of your program. Use the 'checkJS' option to get errors from these files. */,
+    "checkJs": true /* Enable error reporting in type-checked JavaScript files. */,
+    // "maxNodeModuleJsDepth": 1,                        /* Specify the maximum folder depth used for checking JavaScript files from 'node_modules'. Only applicable with 'allowJs'. */
+    /* Emit */
+    // "declaration": true,                              /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
+    // "declarationMap": true,                           /* Create sourcemaps for d.ts files. */
+    // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
+    // "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
+    // "outFile": "./",                                  /* Specify a file that bundles all outputs into one JavaScript file. If 'declaration' is true, also designates a file that bundles all .d.ts output. */
+    // "outDir": "./",                                   /* Specify an output folder for all emitted files. */
+    // "removeComments": true,                           /* Disable emitting comments. */
+    "noEmit": true /* Disable emitting files from a compilation. */,
+    // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
+    // "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
+    // "downlevelIteration": true,                       /* Emit more compliant, but verbose and less performant JavaScript for iteration. */
+    // "sourceRoot": "",                                 /* Specify the root path for debuggers to find the reference source code. */
+    // "mapRoot": "",                                    /* Specify the location where debugger should locate map files instead of generated locations. */
+    // "inlineSourceMap": true,                          /* Include sourcemap files inside the emitted JavaScript. */
+    // "inlineSources": true,                            /* Include source code in the sourcemaps inside the emitted JavaScript. */
+    // "emitBOM": true,                                  /* Emit a UTF-8 Byte Order Mark (BOM) in the beginning of output files. */
+    // "newLine": "crlf",                                /* Set the newline character for emitting files. */
+    // "stripInternal": true,                            /* Disable emitting declarations that have '@internal' in their JSDoc comments. */
+    // "noEmitHelpers": true,                            /* Disable generating custom helper functions like '__extends' in compiled output. */
+    // "noEmitOnError": true,                            /* Disable emitting files if any type checking errors are reported. */
+    // "preserveConstEnums": true,                       /* Disable erasing 'const enum' declarations in generated code. */
+    // "declarationDir": "./",                           /* Specify the output directory for generated declaration files. */
+    // "preserveValueImports": true,                     /* Preserve unused imported values in the JavaScript output that would otherwise be removed. */
+    /* Interop Constraints */
+    // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
+    "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    // "preserveSymlinks": true,                         /* Disable resolving symlinks to their realpath. This correlates to the same flag in node. */
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+    // "noImplicitAny": true,                            /* Enable error reporting for expressions and declarations with an implied 'any' type. */
+    "strictNullChecks": true /* When type checking, take into account 'null' and 'undefined'. */,
+    "strictFunctionTypes": true /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */,
+    // "strictBindCallApply": true,                      /* Check that the arguments for 'bind', 'call', and 'apply' methods match the original function. */
+    // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */
+    // "noImplicitThis": true,                           /* Enable error reporting when 'this' is given the type 'any'. */
+    // "useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
+    // "alwaysStrict": true,                             /* Ensure 'use strict' is always emitted. */
+    // "noUnusedLocals": true,                           /* Enable error reporting when local variables aren't read. */
+    // "noUnusedParameters": true,                       /* Raise an error when a function parameter isn't read. */
+    // "exactOptionalPropertyTypes": true /* Interpret optional property types as written, rather than adding 'undefined'. */,
+    // "noImplicitReturns": true,                        /* Enable error reporting for codepaths that do not explicitly return in a function. */
+    // "noFallthroughCasesInSwitch": true,               /* Enable error reporting for fallthrough cases in switch statements. */
+    "noUncheckedIndexedAccess": true /* Add 'undefined' to a type when accessed using an index. */,
+    // "noImplicitOverride": true,                       /* Ensure overriding members in derived classes are marked with an override modifier. */
+    // "noPropertyAccessFromIndexSignature": true,       /* Enforces using indexed accessors for keys declared using an indexed type. */
+    // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
+    // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
+    /* Completeness */
+    "skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+  }
+}
+
+
+
+================================================
+FILE: .eslintignore
+================================================
+.eslintrc.js
+wallaby.js
+playwright-report
+test-results
+
+
+================================================
+FILE: .eslintrc.cjs
+================================================
+module.exports = {
+  env: {
+    es2021: true,
+    node: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/typescript',
+    'plugin:import/recommended',
+    'plugin:cypress/recommended',
+    'plugin:prettier/recommended',
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json'],
+  },
+  plugins: ['@typescript-eslint', 'implicit-dependencies', 'no-only-tests'],
+  settings: {
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true, // Always try to resolve types under `@types` directory even if it's not in `package.json`
+      },
+    },
+  },
+  ignorePatterns: [
+    'dist',
+    'node_modules',
+    'scripts',
+    '**/*.d.ts',
+    'cypress/**/*',
+    'vendor/**/*',
+    '**/*.spec.js',
+    '**/*.config.js',
+    'reset-db.js',
+    'app.js',
+    'analytics.js',
+  ],
+  root: true,
+  rules: {
+    '@typescript-eslint/consistent-type-imports': 'error',
+    '@typescript-eslint/consistent-type-exports': 'error',
+    '@typescript-eslint/await-thenable': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    'no-only-tests/no-only-tests': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    complexity: ['warn', 15],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'single'],
+    semi: ['error', 'never'],
+    'import/default': 'off',
+    '@typescript-eslint/no-require-imports': 'off',
+    'cypress/unsafe-to-chain-command': 'off',
+    'import/no-named-as-default': 'off',
+  },
+}
+
+
+
+================================================
+FILE: .npmrc
+================================================
+registry=https://registry.npmjs.org
+
+
+================================================
+FILE: .nvmrc
+================================================
+22
+
+
+================================================
+FILE: .prettierrc.json
+================================================
+{
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true
+}
+
+
+
+================================================
+FILE: @types/todo.ts
+================================================
+export type Todo = {
+  title: string
+  completed: boolean
+  id: string
+}
+
+export type TodoPostResponse = {
+  responseJson: Todo
+}
+
+export type TodoPostRequest = Todo & { id: string }
+
+
+
+================================================
+FILE: cypress/e2e/add.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+beforeEach(() => {
+  cy.visit('/')
+
+  cy.get('body').should('have.class', 'loaded')
+  // same thing
+  cy.get('body.loaded')
+})
+
+it('has title', () => {
+  console.log('running test "%s"', Cypress.currentTest.titlePath.join('/'))
+  cy.title().should('equal', 'cy-vs-pw-example-todomvc')
+})
+
+it('adding todos', () => {
+  cy.get('[placeholder="What needs to be done?"]').type('Write code {enter}')
+  cy.get('.todo-list li label')
+    .should('have.length.gte', 1)
+    .and('contain', 'Write code')
+})
+
+
+
+================================================
+FILE: cypress/e2e/clock.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('fetches todos every 60 seconds', () => {
+    // spy on the "GET /todos" requests and
+    // give them an alias "loadTodos"
+    // https://on.cypress.io/intercept
+    cy.intercept('GET', '/todos').as('loadTodos')
+    // control the application's clock
+    // https://on.cypress.io/clock
+    cy.clock()
+    cy.visit('/')
+    // confirm the application called the "loadTodos" endpoint
+    // Tip: you can even use a short 100ms timeout
+    cy.tick(1000)
+    cy.wait('@loadTodos')
+    // advance the application's clock by 61 seconds
+    // https://on.cypress.io/tick
+    cy.tick(61_000)
+    // confirm the application called the "loadTodos" endpoint
+    cy.wait('@loadTodos')
+    // advance the application's clock by another 61 seconds
+    cy.tick(61_000)
+    // confirm the application called the "loadTodos" endpoint
+    cy.wait('@loadTodos')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/complete.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../fixtures/three.json'
+
+describe('Complete todos', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+
+    cy.visit('/')
+    cy.get('body.loaded').should('be.visible')
+  })
+
+  it('completes a todo', () => {
+    const todos = '.todo-list li'
+    const todoLabels = todos + ' label'
+    const count = '[data-cy="remaining-count"]'
+
+    // confirm the item labels
+    const labels = items.map((item) => item.title)
+    cy.get(todoLabels)
+      .should('have.length', items.length)
+      .should('read', labels)
+    // .map('innerText') // old way
+    // .should('deep.equal', labels)
+
+    // confirm the "3" todos remaining is shown
+    cy.contains(count, items.length - 1)
+
+    // complete the first item by clicking its toggle element
+    cy.get(todos).first().find('.toggle').click()
+
+    // confirm completed vs not completed
+    cy.get(todos).first().should('have.class', 'completed')
+    cy.get(todos).eq(1).should('have.class', 'completed')
+    cy.get(todos).eq(2).should('not.have.class', 'completed')
+
+    // confirm classes for all 3 elements at once
+    cy.get(todos)
+      .map('classList.value')
+      .should('deep.equal', ['todo completed', 'todo completed', 'todo'])
+
+    // confirm there is 1 remaining items
+    cy.contains(count, items.length - 2)
+    // and that we can clear the completed items button appears
+    cy.contains('button', 'Clear completed').should('be.visible')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/delete-items.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import 'cypress-real-events'
+import items from '../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    // do a hard wait (this is an anti pattern, but to run all examples together in parallel...)
+    // cy.wait(2000)
+    cy.request('POST', '/reset', { todos: items })
+  })
+
+  it('deletes items', () => {
+    // common locators
+    const todos = '.todo-list li'
+
+    cy.visit('/')
+    cy.get(todos).should('have.length', items.length)
+
+    // delete one completed item (the middle one)
+    cy.get(todos).eq(1).realHover().find('.destroy').click()
+
+    // confirm the remaining two items are still there
+    cy.get(todos)
+      .should('have.length', 2)
+      .should('read', ['Write code $1', 'Make tests pass $59'])
+    // .map('innerText') // old way
+    // .should('deep.equal', ['Write code $1', 'Make tests pass $59'])
+
+    // delete one incomplete item (the first one)
+    cy.get(todos).first().realHover().find('.destroy').click()
+
+    // confirm the one remaining item
+    cy.get(todos)
+      .should('have.length', items.length - 2)
+      .contains('Make tests pass $59')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/labels.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+import items from '../../fixtures/three.json'
+
+// add a new Chai assertion "have.texts"
+chai.use((_chai, utils) => {
+  // use "function" syntax to make sure when Chai
+  // calls it, the "this" object points at Chai
+  function assertText(strings) {
+    // first, confirm the number of elements is the same
+    // as the number of expected strings
+    this.assert(
+      this._obj.length === strings.length,
+      `expected to find ${strings.length} elements`,
+    )
+
+    // compare each string to the element inside jQuery object
+    strings.forEach((s, k) => {
+      // assume we want to normalize the whitespace around
+      const expected = s.trim()
+      const text = this._obj[k].innerText.trim()
+      this.assert(
+        text === expected,
+        `element: ${k + 1} expected text **${expected}**, found **${text}**`,
+      )
+    })
+  }
+
+  _chai.Assertion.addMethod('texts', assertText)
+})
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    // visit the base url
+    cy.visit('/')
+  })
+
+  it('shows the right labels', () => {
+    // common locators
+    const todos = '.todo-list li'
+
+    // the application starts with 3 items
+    cy.get(todos).should('have.length', 3)
+    // get the label from each item
+    // and confirm the todos elements have the right text
+    // const labels = items.map((item) => item.title)
+    // alternative: use the bundled Lodash library
+    const labels = Cypress._.map(items, 'title')
+
+    // confirm the todo elements have the labels
+    // from the fixture file
+    cy.get(todos).should('have.texts', labels)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/local-storage.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.todo').should('have.length', 3)
+  })
+
+  it('stores todos in the local storage', () => {
+    // the local storage should have three items
+    // Tip: the local storage is available under "window.localStorage"
+    // and to get an item from the local storage you
+    // can invoke the "getItem" method on it
+    cy.window()
+      .its('localStorage')
+      .invoke('getItem', 'todos')
+      // confirm the item is a string
+      // then parse it into an object
+      .should('be.a', 'string')
+      // @ts-ignore
+      .then(JSON.parse)
+      // which should be an array with 3 items
+      .should('have.length', 3)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/routing.cy.js
+================================================
+import items from '../../fixtures/three.json'
+
+describe('App routing', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+  })
+
+  it('shows all, completed, or incomplete todos', () => {
+    // common locators
+    const todos = '.todo-list li'
+
+    // the application starts with 3 items
+    cy.visit('/')
+    cy.get(todos).should('have.length', 3)
+
+    // inside the "footer" element there is a list with class "filters"
+    // tip: Cypress has cy.within command useful to work with a part of the page
+    // https://on.cypress.io/within
+    cy.get('footer .filters').within(() => {
+      // by default, the filter "All" is selected and nothing else
+      cy.contains('a.selected', 'All')
+      cy.contains('a', 'Completed').should('not.have.class', 'selected')
+      // click on the "Active" link and confirm the URL changes its hash part to "#/active"
+      cy.contains('a', 'Active').should('not.have.class', 'selected').click()
+      cy.location('hash').should('equal', '#/active')
+    })
+
+    // there should be 2 todo items shown
+    cy.get(todos).should('have.length', 2)
+
+    cy.get('footer .filters').within(() => {
+      // the filter "Active" is selected instead of "All" and nothing else
+      cy.contains('a.selected', 'Active')
+      cy.contains('a', 'All').should('not.have.class', 'selected')
+      // click on the "Completed" link and confirm the URL hash changes
+      cy.contains('a', 'Completed').should('not.have.class', 'selected').click()
+      cy.location('hash').should('equal', '#/completed')
+    })
+
+    // there should be just one item shown
+    cy.get(todos).should('have.length', 1)
+
+    cy.get('footer .filters').within(() => {
+      // the filter "Completed" is selected, and nothing else
+      cy.contains('a.selected', 'Completed')
+      cy.contains('a', 'Active').should('not.have.class', 'selected')
+      // click on the "All" link and confirm the URL hash changes
+      cy.contains('a', 'All').should('not.have.class', 'selected').click()
+      cy.location('hash').should('equal', '#/all')
+    })
+    // and we are back to 3 items
+    cy.get(todos).should('have.length', 3)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/shows-items-test-step-version.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+import items from '../../fixtures/three.json'
+
+describe('Complete todos', () => {
+  beforeEach(() => {
+    // confirm there are several items
+    // and some are completed and some are not
+    expect(items.length, 'number of items').to.be.greaterThan(0)
+    expect(items.some((item) => item.completed)).to.be.true
+    expect(items.some((item) => !item.completed)).to.be.true
+
+    cy.request('POST', '/reset', { todos: items })
+  })
+
+  it('completes a todo', () => {
+    const todos = '.todo-list li'
+    const count = '[data-cy="remaining-count"]'
+
+    cy.visit('/')
+
+    cy.log(`**shows _${items.length}_ items**`)
+    cy.get(todos).should('have.length', items.length)
+
+    cy.log('**check each item**')
+    items.forEach((item, k) => {
+      cy.get(todos).eq(k).contains('label', item.title)
+
+      if (item.completed) {
+        cy.get(todos).eq(k).should('have.class', 'completed')
+      } else {
+        cy.get(todos).eq(k).should('not.have.class', 'completed')
+      }
+    })
+
+    const n = items.filter((item) => !item.completed).length
+    cy.log(`remaining count **${n}**`)
+    cy.contains(count, n)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/shows-items.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+import items from '../../fixtures/three.json'
+
+describe('Complete todos', () => {
+  beforeEach(() => {
+    // confirm there are several items
+    // and some are completed and some are not
+    expect(items.length, 'number of items').to.be.greaterThan(0)
+    expect(items.some((item) => item.completed)).to.be.true
+    expect(items.some((item) => !item.completed)).to.be.true
+
+    cy.request('POST', '/reset', { todos: items })
+  })
+
+  it('completes a todo', () => {
+    // common locators
+    const todos = '.todo-list li'
+    const count = '[data-cy="remaining-count"]'
+
+    cy.visit('/')
+
+    // shows N items
+    cy.get(todos).should('have.length', items.length)
+
+    // go through the items and confirm each is rendered correctly
+    // - label text
+    // - completed or not
+    items.forEach((item, k) => {
+      cy.get(todos).eq(k).contains('label', item.title)
+
+      if (item.completed) {
+        cy.get(todos).eq(k).should('have.class', 'completed')
+      } else {
+        cy.get(todos).eq(k).should('not.have.class', 'completed')
+      }
+    })
+
+    // confirm the remaining items count is correct
+    const n = items.filter((item) => !item.completed).length
+    cy.contains(count, n)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/spy-on-console.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('prints the load start message', () => {
+    // visit the page
+    // but before any of the application code loads
+    // set up a spy on the "console.log" method
+    // give the spy an alias "log"
+    // https://on.cypress.io/visit
+    // https://on.cypress.io/spy
+    cy.visit('/', {
+      onBeforeLoad(win) {
+        cy.spy(win.console, 'log').as('log')
+      },
+    })
+    // confirm the "log" spy was called with
+    // two expected arguments
+    cy.get('@log').should(
+      'have.been.calledWith',
+      'loadTodos start, delay is %d',
+      0,
+    )
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/spy-window-property.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.todo').should('have.length', 3)
+  })
+
+  it('uses ADD_TODO mutation', () => {
+    // the Vuex store used inside the application
+    // calls a mutation to add new Todo to the store
+    // ADD_TODO(state, todoObject) {
+    //   state.todos.push(todoObject)
+    // },
+    // Can you access the mutations in the store
+    // and spy on the ADD_TODO mutation?
+    // Note: the list of mutations for ADD_TODO is an array
+    // https://on.cypress.io/window
+    // https://on.cypress.io/its
+    // https://on.cypress.io/spy
+    cy.window()
+      .its('app.$store._mutations.ADD_TODO')
+      .then((addTodoMutations) => {
+        // confirm the list of ADD_TODO mutations has 1 element
+        expect(addTodoMutations).to.have.length(1)
+        // spy on the first mutation and give it an alias "addTodo"
+        cy.spy(addTodoMutations, '0').as('addTodo')
+      })
+
+    cy.intercept('POST', '/todos').as('postTodo')
+    // type the todo "a test" into the input element
+    // confirm the "a test" todo appears on the page
+    cy.get('.new-todo').type('a test{enter}')
+    cy.wait('@postTodo')
+    cy.contains('li.todo', 'a test')
+
+    // get the "addTodo" spy and confirm it was called
+    // with expected argument object
+    // Question: you know the title and the completed property
+    // but how do you know the ID?
+    cy.get('@addTodo').should('have.been.calledOnceWith', {
+      completed: false,
+      id: Cypress.sinon.match.string,
+      title: 'a test',
+    })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/test-isolation-false.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import todos from '../../fixtures/three.json'
+
+// how would you ensure that these tests run one after another
+// and do not go to the blank page in between?
+describe('Completing todos', { testIsolation: false }, () => {
+  before(() => {
+    cy.request('POST', '/reset', { todos })
+  })
+
+  // blasphemy...
+  it('shows the list of todos', () => {
+    cy.visit('/')
+    // confirm the number of todos shown
+    cy.get('li.todo').should('have.length', todos.length)
+    cy.log('**all todos are active**')
+    // confirm the all todos are active (do not have class completed)
+    cy.get('li.todo:not(.completed)').should('have.length', todos.length - 1)
+    // there should be no completed todos
+    cy.get('li.todo.completed').should('have.length', todos.length - 2)
+  })
+
+  it('completes the first todo', () => {
+    // find the first todo and click on its ".toggle" button
+    cy.get('li').first().find('.toggle').click()
+    // the first todo should get the class "completed"
+    cy.get('li').first().should('have.class', 'completed')
+  })
+
+  it('clears completed todos', () => {
+    // click on the button with the text "Clear completed"
+    cy.contains('button', 'Clear completed').click()
+    // the number of todos should go down by 1
+    cy.get('li.todo').should('have.length', todos.length - 2)
+    // there should be no completed todos
+    cy.get('li.todo.completed').should('have.length', 0)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/todos-sort.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import 'cypress-map'
+import items from '../../fixtures/three.json'
+
+describe('Prices', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.loaded')
+  })
+
+  const todos = '.todo-list li'
+
+  it('shows items sorted by price', () => {
+    // confirm there are several items
+    // and parse each item's title to get the prices
+    // and confirm they are sorted in the ascending order
+    cy.get(todos).should(($el) => {
+      const titles = Cypress._.map($el, 'innerText')
+      const matches = titles.map((s) => s.match(/\$(?<price>\d+)/))
+      const strings = matches.map((m) => m?.groups?.price)
+      // @ts-ignore
+      const prices = strings.map(parseFloat)
+      const sorted = Cypress._.sortBy(prices) // doesn't mutate the original prices
+      expect(sorted, 'sorted from min to max').to.deep.equal(prices)
+    })
+  })
+
+  it('cypress-map version - shows items sorted by price', () => {
+    cy.get('.todo-list li')
+      .map('innerText')
+      .mapInvoke('match', /\$(?<price>\d+)/)
+      .map('groups.price')
+      .map(parseFloat)
+      .should((prices) => {
+        const sorted = Cypress._.sortBy(prices)
+        expect(sorted, 'sorted from min to max').to.deep.equal(prices)
+      })
+  })
+
+  it('shows the items with css class', () => {
+    // from the list of items get the list of titles
+    // and the list of CSS classes each item element should have
+    // completed? "todo" + "completed"
+    // incomplete? just "todo"
+    const titles = Cypress._.map(items, 'title')
+    const cssClasses = items.map((item) =>
+      item.completed ? 'todo completed' : 'todo',
+    )
+    // confirm the todo items have the titles and the class names
+    cy.get(todos).map('innerText').should('deep.equal', titles)
+    // timeout last: when you have multiple chained queries,
+    // place the timeout parameter on the last query before the assertion.
+    cy.get(todos)
+      .map('className', { timeout: 7000 })
+      .should('deep.equal', cssClasses)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/todos-uncertain-number.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.todo').should('have.length', 3)
+  })
+
+  it('shows more than 2 items at the start', () => {
+    // common locators
+    const todos = '.todo-list li'
+
+    // the application starts several items
+    // assume that we don't know the exact number
+    // but we expect more than 2 items
+
+    // solution 1
+    cy.get(todos).should('have.length.above', 2)
+    cy.get(todos).should('have.length.greaterThan', 2)
+    cy.get(todos).its('length').should('be.greaterThan', 2)
+    cy.get(todos).should('have.length.gte', 3)
+    // solution 2
+    cy.get(todos).should(
+      'satisfy',
+      ($el) => $el.length > 2,
+      'more than 2 elements',
+    )
+    // solution 3
+    cy.get(todos).should(($el) => {
+      expect($el.length, 'more than 2 elements').to.be.greaterThan(2)
+    })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/window-property-apptodos.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.todo').should('have.length', 3)
+  })
+
+  it('gets the todos from the application', () => {
+    // get the list of todos from the application
+    // using the "window.appTodos" property
+    cy.window()
+      .its('appTodos')
+      // confirm that the todo titles you got from the app
+      // are the same as the titles in the loaded todos fixture
+      .map('title')
+      .should('deep.equal', Cypress._.map(items, 'title'))
+
+    // confirm that each item in the todos list points at the list
+    // via the "list" property
+    cy.window()
+      .its('appTodos')
+      .then((todos) => {
+        todos.forEach((todo, k) => {
+          expect(todo.list, `item ${k + 1}`).to.equal(todos)
+        })
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/api-e2e/crud-todo.cy.js
+================================================
+import spok from 'cy-spok'
+import '@bahmutov/cy-api'
+
+describe('Todo API', () => {
+  const newTodo = { title: 'Write more tests with cy', completed: false }
+  const updatedTodo = { title: 'Write updated tests with cy', completed: true }
+
+  it('should crud a todo', () => {
+    cy.api({ method: 'POST', url: '/todos', body: newTodo })
+      .should(
+        spok({
+          status: 201,
+          body: {
+            ...newTodo,
+            id: spok.string,
+          },
+        }),
+      )
+      .its('body.id')
+      .then((id) => {
+        // get all todos
+        cy.api({ method: 'GET', url: '/todos' }).its('status').should('eq', 200)
+        cy.api({ method: 'GET', url: '/todos' })
+          .its('body')
+          .should('have.length.gte', 1)
+
+        // get one todo
+        cy.api({ method: 'GET', url: `/todos/${id}` }).should(
+          spok({
+            status: 200,
+            body: {
+              ...newTodo,
+              id,
+            },
+          }),
+        )
+
+        // update the todo
+        cy.api({
+          method: 'PUT',
+          url: `/todos/${id}`,
+          body: updatedTodo,
+        }).should(
+          spok({
+            status: 200,
+            body: {
+              ...updatedTodo,
+              id,
+            },
+          }),
+        )
+
+        cy.api({ method: 'GET', url: `/todos/${id}` }).should(
+          spok({
+            status: 200,
+            body: {
+              ...updatedTodo,
+              id,
+            },
+          }),
+        )
+
+        cy.api({ method: 'DELETE', url: `/todos/${id}` })
+          .its('status')
+          .should('eq', 200)
+
+        cy.api({
+          method: 'GET',
+          url: `/todos/${id}`,
+          failOnStatusCode: false,
+        })
+          .its('status')
+          .should('eq', 404)
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/load-error-spy-on-console.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('logs a server error', () => {
+    // stub the "GET /todos" route and return
+    // an object with status code 500
+    // and the body "server error"
+    // Give this stub the alias "load"
+    cy.intercept('GET', '/todos', {
+      statusCode: 500,
+      body: 'server error',
+    }).as('load')
+    // visit the page and stub the "console.error" method
+    // give this stub an alias "console-error"
+    // https://on.cypress.io/visit
+    // https://on.cypress.io/stub
+    cy.visit('/', {
+      onBeforeLoad(win) {
+        cy.spy(win.console, 'error').as('console-error')
+      },
+    })
+    // wait for the network call
+    cy.wait('@load')
+    // get the stub "console-error" and confirm it was called
+    // with the argument "server error"
+    cy.get('@console-error').should('have.been.calledWith', 'server error')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/load.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('shows a loader', () => {
+    // intercept the "/todos" call
+    // and delay it by 2 seconds before
+    // allowing it to continue to the server
+    // spy on the "/todos" network call
+    cy.intercept('GET', '/todos', () => Cypress.Promise.delay(2000)).as(
+      'loading',
+    )
+
+    cy.visit('/')
+
+    // confirm the loading element is visible
+    cy.get('.loading').should('be.visible')
+    // confirm the "/todos" call has happened
+    cy.wait('@loading')
+    // confirm loading element becomes hidden
+    cy.get('.loading').should('not.be.visible')
+
+    // confirm the app finishes loading
+    cy.get('.loaded', { timeout: 100 })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/modify-server-response.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('inserts the first todo', () => {
+    const todos = '.todo-list li'
+    const title = 'The first one!'
+
+    // spy on the "GET /todos" network call
+    // before the request continues
+    // delete the header "if-none-match" to avoid
+    // the server responding with "304 Not Modified"
+    // once the response arrives
+    // confirm it is an array
+    // and insert a new object at the first position
+    // title, completed=false, id="1234"
+    // https://on.cypress.io/intercept
+    cy.intercept('GET', '/todos', (req) => {
+      // Disable cache problem: 304 another way to disable cache
+      delete req.headers['if-none-match']
+      req.continue((res) => {
+        expect(res.body, 'response list').to.be.an('array')
+        res.body.unshift({
+          title,
+          completed: false,
+          id: '1234',
+        })
+      })
+    })
+
+    cy.visit('/')
+    // confirm there is at least one todo
+    // and the first todo element
+    // has the title text
+    // and has the class "todo"
+    // and does not have class "completed"
+    cy.get(todos)
+      .should('have.length.greaterThan', 0)
+      .first()
+      .should('include.text', title)
+      .and('have.class', 'todo')
+      .and('not.have.class', 'completed')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/same-response.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+// increase the threshold to see the full object
+// in the assertion "deep.equal"
+chai.config.truncateThreshold = 500
+
+describe('App', () => {
+  it('responds with the same data on posting new item', () => {
+    cy.visit('/')
+    cy.get('.loaded')
+
+    // spy on the "POST /todos" network call
+    cy.intercept('POST', '/todos').as('post')
+    // enter a new todo
+    cy.get('input.new-todo').type('A task{enter}')
+
+    // wait for the "post" intercept and then
+    // confirm the server responds with the same data
+    // back as the web app sends in the request
+    cy.wait('@post').then((intercepted) => {
+      expect(intercepted.request.body, 'same data').to.deep.equal(
+        intercepted.response?.body,
+      )
+    })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/spy-on-math-random.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../../fixtures/three.json'
+
+chai.config.truncateThreshold = 400
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.loaded')
+  })
+
+  it('confirms the entire sent Todo object', () => {
+    // spy on the "POST /todos" network call
+    // and give it an alias "post"
+    // https://on.cypress.io/intercept
+    // https://on.cypress.io/as
+    cy.intercept('POST', '/todos').as('post')
+    // get the application's window object
+    // and spy on its "Math.random" method
+    // https://on.cypress.io/window
+    // https://on.cypress.io/its
+    // https://on.cypress.io/spy
+    // give the method spy an alias "random"
+    cy.window()
+      .its('Math')
+      .then((Math) => {
+        cy.spy(Math, 'random').as('random')
+      })
+    // enter new todo "Code" followed by enter
+    cy.get('input.new-todo').type('Code{enter}')
+    // get the "random" spy
+    // https://on.cypress.io/get
+    // and confirm it was called once
+    // https://glebbahmutov.com/cypress-examples/commands/spies-stubs-clocks.html
+    cy.get('@random')
+      .should('have.been.calledOnce')
+      // from the spy, get the first call's return value
+      // using "firstCall.returnValue" deep notation
+      // https://on.cypress.io/its
+      .its('firstCall.returnValue')
+      // and confirm it is a number between 0 and 1
+      .should('be.within', 0, 1)
+      // follow the same steps as the app.js does to
+      // convert the float to the string id
+      .invoke('toString')
+      .invoke('substr', 2, 10)
+      // pass the id value into cy.then callback and
+      // get the "post" network call post data
+      // you know know all the fields it should have
+      // confirm using the "deep.equal" assertion
+      .then((id) => {
+        cy.wait('@post').its('request.body').should('deep.equal', {
+          title: 'Code',
+          completed: false,
+          id,
+        })
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/stub-3-ways.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  it('stubs the load data network call three different ways', () => {
+    const todos = '.todo-list li'
+
+    // stub the "GET /todos" network call
+    // on the first call return the data from the "fixtures/one.json" file
+    // on the second call return the data from the "fixtures/two.json" file
+    // on the third call return the data from the "fixtures/three.json" file
+    // Tip: while you can write a callback that keeps the request count
+    // to decide which fixture to return, you can also define a Cypress intercept
+    // to work only a certain number of times
+    // See the https://on.cypress.io/intercept options
+    cy.intercept(
+      {
+        method: 'GET',
+        path: '/todos',
+      },
+      { fixture: 'three.json' },
+    )
+
+    cy.intercept(
+      {
+        method: 'GET',
+        path: '/todos',
+        times: 1,
+      },
+      { fixture: 'two.json' },
+    )
+
+    cy.intercept(
+      {
+        method: 'GET',
+        path: '/todos',
+        times: 1,
+      },
+      { fixture: 'one.json' },
+    )
+    // load the page
+    // and confirm only 1 todo is shown
+    cy.visit('/')
+    cy.get(todos).should('have.length', 1)
+    // reload the page
+    // confirm there are 2 todos
+    cy.reload()
+    cy.get(todos).should('have.length', 2)
+    // reload the page
+    // confirm there are 3 todos
+    cy.reload()
+    cy.get(todos).should('have.length', 3)
+    // reload the page one more time
+    // and confirm the 3 todos are still there
+    cy.reload()
+    cy.get(todos).should('have.length', 3)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/todos-compare.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import items from '../../../fixtures/three.json'
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.request('POST', '/reset', { todos: items })
+    cy.visit('/')
+    cy.get('.loaded')
+  })
+
+  it('assigns a different id to each new item', () => {
+    // start spying on the "POST /todos" calls
+    // assign the intercept an alias "post-todo"
+    cy.intercept('POST', '/todos').as('post-todo')
+
+    // add new todo with text "first todo"
+    cy.get('.new-todo').type('first todo{enter}')
+
+    // get the request id sent by the application
+    // from the network call "post-todo"
+    // confirm it is a string
+    cy.wait('@post-todo')
+      .its('request.body.id')
+      .should('be.a', 'string')
+      .then((id) => {
+        // add new todo with text "second todo"
+        cy.get('.new-todo').type('second todo{enter}')
+        // get the request id from the second todo
+        // sent by the application
+        // confirm it is a string
+        // and it is different from the first request
+        cy.wait('@post-todo')
+          .its('request.body.id')
+          .should('be.a', 'string')
+          .and('not.equal', id)
+      })
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/todos-delete.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  beforeEach(() => {
+    cy.visit('/')
+    cy.get('.loaded')
+  })
+
+  it('deletes a todo', () => {
+    const title = 'Advance ' + Cypress._.random(1e6)
+
+    // spy on the "POST /todos" network call
+    cy.intercept('POST', '/todos').as('postTodo')
+
+    // enter the new todo with a random title
+    cy.get('input.new-todo').type(title + '{enter}')
+
+    // wait for the post call and get the todo item id
+    cy.wait('@postTodo')
+      .its('response.body.id')
+      .then((id) => {
+        // spy on the "DELETE /todos/:id" network call
+        cy.intercept('DELETE', `/todos/${id}`).as('deleteTodo')
+
+        // find the newly entered todo item
+        // and click on the delete button
+        cy.contains('li.todo', title).find('.destroy').click({ force: true })
+
+        // confirm the delete network call happens
+        // and the server responded with the status code 200
+        cy.wait('@deleteTodo').its('response.statusCode').should('equal', 200)
+      })
+    // confirm the new todo is no longer on the page
+    cy.contains('li.todo', title).should('not.exist')
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/todos-spy-and-add.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+import spok from 'cy-spok'
+describe('App', () => {
+  beforeEach(() => {
+    // stub the "GET /todos" network calls
+    // and return an empty array
+    cy.intercept('GET', '/todos', { body: [] })
+
+    cy.visit('/')
+    cy.get('.loaded')
+    cy.get('.todo-list li').should('have.length', 0)
+  })
+
+  it('sends new todo object', () => {
+    // spy on the "POST /todos" call
+    cy.intercept('POST', '/todos').as('post-todo')
+
+    // add an item
+    cy.get('.new-todo').type('Learn testing{enter}')
+    cy.get('.todo-list li').should('have.length', 1)
+
+    // confirm the new todo was sent over the network
+    cy.wait('@post-todo')
+      // get the request body and confirm the known properties "title" and "completed"
+      // confirm the request body includes the property "id", as string
+      .its('request.body')
+      .should(
+        spok({
+          title: 'Learn testing',
+          completed: false,
+          id: spok.string,
+        }),
+      )
+    // confirm the server responds with status code 201
+    cy.get('@post-todo').its('response.statusCode').should('equal', 201)
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/todos-spy.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  beforeEach(() => {
+    // Disable cache problem: 304
+    // Every time the application receives the data, it saves the ETag header value.
+    // Next time the app asks for the data, it sends this value with the header If-None-Match.
+    // If the server sees the match in the request, it simply responds with Status: 304 Not Modified, Body: "".
+
+    // Why is this not a problem in Playwright?
+    // Because enabling routing and waiting for responses disable the cache there.
+    // But in Cypress, we can test the caching behavior, thus it is up to us to disable the built-in caching
+
+    // KEY: disable network caching using a Chrome Debugger Protocol command
+    // by using "cy.wrap" command we ensure that the promise returned
+    // by the Cypress.automation method resolves before proceeding
+    // to the next Cypress command
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Network.setCacheDisabled',
+        params: {
+          cacheDisabled: true,
+        },
+      }),
+    )
+
+    // spy on the network call "GET /todos"
+    // give the network intercept an alias
+    cy.intercept('GET', '/todos').as('load')
+    cy.visit('/')
+  })
+
+  it('shows the same number of items as sent by the server', () => {
+    // wait for the network alias
+    // grab its length and pass it to the cy.then callback
+    // inside the callback get the number of Todo items on the page,
+    // it should equal to the number of items returned by the server
+    cy.wait('@load')
+      .its('response.body.length')
+      .then((n) => cy.get('.todo-list li').should('have.length', n))
+  })
+})
+
+
+
+================================================
+FILE: cypress/e2e/network/todos-stub.cy.js
+================================================
+// @ts-check
+/// <reference types="cypress" />
+
+describe('App', () => {
+  beforeEach(() => {
+    // set up a route handler for "/todos" endpoint
+    // when the route matches, fulfill it using the loaded items array
+    cy.intercept('/todos', { fixture: 'three.json' }).as('load')
+
+    cy.visit('/')
+  })
+
+  it('shows 3 items', () => {
+    // wait for the intercepted network call "load"
+    cy.wait('@load')
+    // confirm the the number of shown todos is 3
+    // and that todos show up within 100ms of the load network call
+    cy.get('.todo-list li').should('have.length', 3)
+  })
+})
+
+
+
+================================================
+FILE: cypress/support/commands.js
+================================================
+// ***********************************************
+// This example commands.js shows you how to
+// create various custom commands and overwrite
+// existing commands.
+//
+// For more comprehensive examples of custom
+// commands please read more here:
+// https://on.cypress.io/custom-commands
+// ***********************************************
+//
+//
+// -- This is a parent command --
+// Cypress.Commands.add('login', (email, password) => { ... })
+//
+//
+// -- This is a child command --
+// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
+//
+//
+// -- This is a dual command --
+// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
+//
+//
+// -- This will overwrite an existing command --
+// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+
+
+================================================
+FILE: cypress/support/e2e.js
+================================================
+// ***********************************************************
+// This example support/e2e.js is processed and
+// loaded automatically before your test files.
+//
+// This is a great place to put global configuration and
+// behavior that modifies Cypress.
+//
+// You can change the location of this file or turn off
+// automatically serving support files with the
+// 'supportFile' configuration option.
+//
+// You can read more here:
+// https://on.cypress.io/configuration
+// ***********************************************************
+
+// Import commands.js using ES2015 syntax:
+import './commands'
+import 'cypress-map'
+
+// Alternatively you can use CommonJS syntax:
+// require('./commands')
+
+
+
+================================================
+FILE: fixtures/one.json
+================================================
+[
+  {
+    "title": "One",
+    "completed": false,
+    "id": "1"
+  }
+]
+
+
+
+================================================
+FILE: fixtures/three.json
+================================================
+[
+  {
+    "title": "Write code $1",
+    "completed": false,
+    "id": "1"
+  },
+  {
+    "title": "Write tests $4",
+    "completed": true,
+    "id": "2"
+  },
+  {
+    "title": "Make tests pass $59",
+    "completed": false,
+    "id": "3"
+  }
+]
+
+
+
+================================================
+FILE: fixtures/two.json
+================================================
+[
+  {
+    "title": "One",
+    "completed": false,
+    "id": "1"
+  },
+  {
+    "title": "Two",
+    "completed": true,
+    "id": "2"
+  }
+]
+
+
+
+================================================
+FILE: pw/add_KEY_hasText_failOnPageError.spec.ts
+================================================
+import { test, expect } from './support/fixtures'
+
+test.beforeEach(async ({ page }) => {
+  // if the application throws an unhandled error  we want to fail the test.
+  // In PW, we have to register the error callback before visiting the page
+  page.on('pageerror', (exception) => {
+    throw new Error(`App threw an error, ${exception}`)
+  })
+
+  await page.goto('/')
+
+  await expect(page.locator('body')).toHaveClass('loaded')
+  // same thing
+  await page.locator('body.loaded').waitFor()
+})
+
+test('has title', async ({ page }, testInfo) => {
+  console.log('running test "%s"', testInfo.titlePath.join('/'))
+  await expect(page).toHaveTitle('cy-vs-pw-example-todomvc')
+})
+
+test('adding todos', async ({ page }) => {
+  const input = page.getByPlaceholder('What needs to be done?')
+  await input.fill('Write code')
+  await input.press('Enter')
+
+  const todos = page.locator('.todo-list li label')
+  expect(await todos.count()).toBeGreaterThanOrEqual(1)
+  // Check if at least one element contains the text
+  page.locator('li.todo', { hasText: 'Write code' })
+})
+
+
+
+================================================
+FILE: pw/clock_KEY.spec.ts
+================================================
+import { test } from './support/fixtures'
+
+test.describe('App', () => {
+  test('fetches todos every 60 seconds', async ({
+    page,
+    interceptNetworkCall,
+  }) => {
+    // setup clock
+    await page.clock.install()
+
+    // Spy on the "/todos" network requests
+    const loadTodos1 = interceptNetworkCall({ url: '/todos', method: 'GET' })
+    const loadTodos2 = interceptNetworkCall({ url: '/todos', method: 'GET' })
+    const loadTodos3 = interceptNetworkCall({ url: '/todos', method: 'GET' })
+    // you can do the shorthand too, but it is not specific to the method
+    // const loadTodos1 = page.waitForRequest('/todos')
+    // const loadTodos2 = page.waitForRequest('/todos')
+    // const loadTodos3 = page.waitForRequest('/todos')
+
+    // Navigate to the application
+    await page.goto('/')
+
+    // Wait for the initial "/todos" request
+    await page.clock.fastForward(1000)
+    await loadTodos1
+
+    // advance the fake timers by 61 seconds
+    // and confirm the application fetches the "/todos" endpoint again
+    await page.clock.fastForward(61_000)
+    await loadTodos2
+
+    // advance the fake timers by 61 seconds
+    // and confirm the application fetches the "/todos" endpoint again
+    await page.clock.fastForward(61_000)
+    await loadTodos3
+  })
+})
+
+
+
+================================================
+FILE: pw/complete-no-fixtures_KEY_toHaveText_toHaveClass_array.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+
+test.describe('Complete todos', () => {
+  test.beforeEach(async ({ request, page }) => {
+    await request.post('/reset', { data: { todos: items } })
+    await page.goto('/')
+    await page.locator('body.loaded').waitFor()
+  })
+
+  test('completes a todo', async ({ page }) => {
+    const todos = page.locator('.todo-list li')
+    const todoLabels = todos.locator('label')
+    const count = page.locator('[data-cy="remaining-count"]')
+
+    // confirm the item labels
+    const labels = items.map((item) => item.title)
+    await expect(todoLabels).toHaveCount(items.length)
+    await expect(todoLabels).toHaveText(labels)
+
+    // confirm the "2" todos remaining is shown
+    await expect(count).toHaveText(String(items.length - 1))
+
+    // complete the first item by clicking its toggle element
+    await todos.first().locator('.toggle').click()
+
+    // confirm completed vs not completed
+    await expect(todos.first()).toHaveClass(/completed/)
+    await expect(todos.nth(1)).toHaveClass(/completed/)
+    await expect(todos.nth(2)).not.toHaveClass(/completed/)
+
+    // confirm classes for all 3 elements at once
+    await expect(todos).toHaveClass([
+      'todo completed',
+      'todo completed',
+      'todo',
+    ])
+
+    // confirm there is 1 remaining items
+    await expect(count).toHaveText(String(items.length - 2))
+    // and that we can clear the completed items button appears
+    await expect(
+      page.getByRole('button', { name: 'Clear completed ' }),
+    ).toBeVisible()
+  })
+})
+
+
+
+================================================
+FILE: pw/delete-items-ramda.spec.ts
+================================================
+import type { Page } from '@playwright/test'
+import { test, expect } from './support/fixtures'
+const items = require('../fixtures/three.json')
+
+/**
+ * Composes asynchronous functions, passing the same 'page' argument to each function in sequence.
+ * Each function receives 'page' and is executed after the previous one completes.
+ * @param {...Function} fns - The asynchronous functions to compose.
+ * @returns {Function} A function that takes 'page' and returns a Promise that resolves when all functions have completed.
+ */
+const asyncPipe =
+  (...fns: any[]) =>
+  (page: Page) =>
+    fns.reduce((promise, fn) => promise.then(() => fn(page)), Promise.resolve())
+
+// Helper functions accepting 'page' as an argument
+const deleteTodoAtIndex = (index: number) => async (page: Page) => {
+  const todos = page.locator('.todo-list li')
+  await todos.nth(index).hover()
+  await todos.nth(index).locator('.destroy').click()
+}
+
+const verifyTodosCount = (expectedCount: number) => async (page: Page) => {
+  const todos = page.locator('.todo-list li')
+  await expect(todos).toHaveCount(expectedCount)
+}
+
+const verifyTodosText = (expectedTexts: string[]) => async (page: Page) => {
+  const todos = page.locator('.todo-list li')
+  await expect(todos).toHaveText(expectedTexts)
+}
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    // do a hard wait (this is an anti pattern, but to run all examples together in parallel...)
+    // await new Promise((resolve) => setTimeout(resolve, 3000))
+    await resetAndVisit(items)
+  })
+
+  test('deletes items', async ({ page }) => {
+    const todos = page.locator('.todo-list li')
+    await expect(todos).toHaveCount(items.length)
+
+    await asyncPipe(
+      deleteTodoAtIndex(1),
+      verifyTodosCount(items.length - 1),
+      verifyTodosText(['Write code $1', 'Make tests pass $59']),
+    )(page)
+
+    await asyncPipe(
+      deleteTodoAtIndex(0),
+      verifyTodosCount(items.length - 2),
+      verifyTodosText(['Make tests pass $59']),
+    )(page)
+  })
+})
+
+
+
+================================================
+FILE: pw/delete-items_KEY_helperFn.spec.ts
+================================================
+import type { Locator } from '@playwright/test'
+import { test, expect } from './support/fixtures'
+const items = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    // do a hard wait (this is an anti pattern, but to run all examples together in parallel...)
+    // await new Promise((resolve) => setTimeout(resolve, 2000))
+    await resetAndVisit(items)
+  })
+
+  const deleteNth = async (todos: Locator, n: number) => {
+    await todos.nth(n).hover()
+    await todos.nth(n).locator('.destroy').click()
+  }
+
+  test('deletes items', async ({ page }) => {
+    const todos = page.locator('.todo-list li')
+    await expect(todos).toHaveCount(items.length)
+
+    // delete one completed item (the middle one)
+    await deleteNth(todos, 1)
+
+    // confirm the remaining two items are still there
+    await expect(todos).toHaveCount(items.length - 1)
+    await expect(todos).toHaveText(['Write code $1', 'Make tests pass $59'])
+
+    // delete one incomplete item (the first one)
+    await deleteNth(todos, 0)
+
+    // confirm the one remaining item
+    await expect(todos).toHaveCount(items.length - 2)
+    await expect(todos).toHaveText('Make tests pass $59')
+  })
+})
+
+
+
+================================================
+FILE: pw/labels_KEY_count.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    await resetAndVisit(items)
+  })
+
+  test('shows the right labels', async ({ page }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+    // the application starts with 3 items
+    // await expect(todos).toHaveCount(3) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length)
+
+    // get the label from each item and confirm the todos elements have the right text
+    const labels = items.map((item) => item.title)
+
+    // confirm the todo elements have the label from the fixture file
+    await expect(todos).toHaveText(labels)
+  })
+})
+
+
+
+================================================
+FILE: pw/local-storage_KEY_page_evaluate.spec.ts
+================================================
+import { test, expect } from './support/fixtures'
+const items = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    await resetAndVisit(items)
+  })
+  test('stores todos in the local storage', async ({ page }) => {
+    // the local storage should have three items under the property "todos"
+    // get the local storage item "todos" and parse it and return back to the test
+    // Tip: use page.evaluate to run code in the browser
+    const todos = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('todos') as string),
+    )
+    expect(todos).toHaveLength(3)
+  })
+})
+
+
+
+================================================
+FILE: pw/routing.spec.ts
+================================================
+import { test, expect } from './support/fixtures'
+const items = require('../fixtures/three.json')
+
+test.describe('App routing', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    await resetAndVisit(items)
+  })
+
+  test('shows all, completed, or incomplete todos', async ({ page }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+    const all = page.getByRole('link', { name: 'All' })
+    const active = page.getByRole('link', { name: 'Active' })
+    const completed = page.getByRole('link', { name: 'Completed' })
+
+    // the application starts with 3 items
+    // await expect(todos).toHaveCount(3) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length)
+
+    // by default, the filter "All" is selected and nothing else
+    await expect(all).toHaveClass('selected')
+    await expect(completed).not.toHaveClass('selected')
+    await expect(active).not.toHaveClass('selected')
+
+    // click on the "Active" link and confirm the URL changes its hash part to "#/active"
+    await active.click()
+    await expect(page).toHaveURL('#/active')
+
+    // there should be 2 todo items shown
+    // await expect(todos).toHaveCount(2) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length - 1)
+
+    // the filter "Active" is selected instead of "All" and nothing else
+    await expect(all).not.toHaveClass('selected')
+    await expect(completed).not.toHaveClass('selected')
+    await expect(active).toHaveClass('selected')
+
+    // click on the "Completed" link and confirm the URL hash changes
+    await completed.click()
+    await expect(page).toHaveURL('#/completed')
+
+    // there should be just one item shown
+    // await expect(todos).toHaveCount(1) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length - 2)
+
+    // the filter "Completed" is selected, and nothing else
+    await expect(all).not.toHaveClass('selected')
+    await expect(completed).toHaveClass('selected')
+    await expect(active).not.toHaveClass('selected')
+
+    // click on the "All" link and confirm the URL hash changes
+    await all.click()
+    // and we are back to 3 items
+    // await expect(todos).toHaveCount(3) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length)
+  })
+})
+
+
+
+================================================
+FILE: pw/shows-items-test-step-version.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+
+// this is pretty yucky...
+
+test.describe('App', () => {
+  test.beforeEach(async ({ request }) => {
+    // confirm there are several items
+    // and some are completed and some are not
+    expect(items.length, 'number of items').toBeGreaterThan(0)
+    expect(items.some((item) => item.completed)).toBeTruthy()
+    expect(items.some((item) => !item.completed)).toBeTruthy()
+    await request.post('/reset', { data: { todos: items } })
+  })
+
+  test('shows items', async ({ page }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+    const count = page.locator('[data-cy="remaining-count"]')
+
+    await page.goto('/')
+
+    await test.step(`shows ${items.length} items`, async () => {
+      await expect(todos).toHaveCount(items.length)
+    })
+
+    await test.step('check each item', async () => {
+      for (const [k, item] of items.entries()) {
+        const itemLocator = todos.nth(k)
+        await expect(itemLocator.locator('label')).toHaveText(item.title)
+        if (item.completed) {
+          await expect(itemLocator).toHaveClass(/completed/)
+        } else {
+          await expect(itemLocator).not.toHaveClass(/completed/)
+        }
+      }
+    })
+
+    const n = items.filter((item) => !item.completed).length
+    await test.step(`remaining count ${n}`, async () => {
+      await expect(count).toHaveText(String(n))
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/shows-items.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ request }) => {
+    // confirm there are several items
+    // and some are completed and some are not
+    expect(items.length).toBeGreaterThan(0)
+    expect(items.some((item) => item.completed)).toBe(true)
+    expect(items.some((item) => !item.completed)).toBe(true)
+    await request.post('/reset', { data: { todos: items } })
+  })
+
+  test('shows items', async ({ page }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+    const count = page.locator('[data-cy="remaining-count"]')
+
+    await page.goto('/')
+
+    // shows N items
+    // await expect(todos).toHaveCount(items.length) // better to make this more relaxed (shared state)
+    expect(await todos.count()).toBeGreaterThanOrEqual(items.length)
+
+    // go through the items and confirm each is rendered correctly
+    // - label text
+    // - completed or not
+    items.forEach(async (item, k) => {
+      await expect(todos.nth(k).locator('label')).toHaveText(item.title)
+
+      if (item.completed) {
+        await expect(todos.nth(k)).toHaveClass(/completed/)
+      } else {
+        await expect(todos.nth(k)).not.toHaveClass(/completed/)
+      }
+    })
+
+    // confirm the remaining items count is correct
+    const n = items.filter((item) => !item.completed).length
+    await expect(count).toHaveText(String(n))
+  })
+})
+
+
+
+================================================
+FILE: pw/spy-on-console_KEY_toContainEqual_toPass_waitFor.spec.ts
+================================================
+import { test, expect } from './support/fixtures'
+
+test.describe('App', () => {
+  test('spyOn helper version - prints the load start message', async ({
+    page,
+    spyOn,
+  }) => {
+    // Initialize the console log spy
+    const log = await spyOn('console', 'log')
+
+    // Visit the application page
+    await page.goto('/')
+
+    // Wait for any asynchronous operations if necessary
+    await page.locator('.loaded').waitFor()
+
+    // Assert that the log array includes the expected arguments
+    await expect(() =>
+      expect(log).toContainEqual(['loadTodos start, delay is %d', 0]),
+    ).toPass()
+  })
+
+  test('prints the load start message', async ({ page }) => {
+    const log: string[] = []
+    // create a function in the application's "window" object
+    // called "logCall" which simply pushes its argument
+    // into the "log" array
+    // Read "Verifying API calls"
+    // https://playwright.dev/docs/mock-browser-apis
+    await page.exposeFunction('logCall', (arg: string) => log.push(arg))
+
+    // inject the initial script into the application
+    // that overwrites the "console.log" method
+    // the overwrite should:
+    // - call the real "console.log" method
+    // - call the "logCall" function to pass the arguments
+    await page.addInitScript(() => {
+      const realLog = console.log.bind(console)
+      console.log = (...args) => {
+        realLog(...args)
+        // @ts-ignore
+        window.logCall(args)
+      }
+    })
+
+    // visit the application page
+    await page.goto('/')
+
+    // confirm the "log" array includes the following arguments
+    // ['loadTodos start, delay is %d', 0]
+    await expect(() =>
+      expect(log).toContainEqual(['loadTodos start, delay is %d', 0]),
+    ).toPass()
+  })
+})
+
+
+
+================================================
+FILE: pw/spy-window-property_pageEvaluate_pageWaitForFunction.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    await resetAndVisit(items)
+  })
+  test('uses ADD_TODO mutation', async ({ page, interceptNetworkCall }) => {
+    // the Vuex store used inside the application
+    // calls a mutation to add new Todo to the store
+    // ADD_TODO(state, todoObject) {
+    //   state.todos.push(todoObject)
+    // },
+    // Can you access the mutations in the store
+    // and spy on the ADD_TODO mutation?
+    // Note: the list of mutations for ADD_TODO is an array
+    await page.evaluate(() => {
+      // @ts-ignore
+      const ADD_TODO = window.app.$store._mutations.ADD_TODO
+      // confirm the list of ADD_TODO mutations has 1 element
+      if (ADD_TODO.length !== 1) {
+        throw new Error('Expected 1 ADD_TODO mutation')
+      }
+      // spy on the first mutation and give it an alias "addTodo"
+      // store all arguments in an array "window.addTodoArgs"
+      // @ts-ignore
+      window.addTodoArgs = []
+      const fn = ADD_TODO[0]
+      ADD_TODO[0] = (...args: any) => {
+        // @ts-ignore
+        window.addTodoArgs.push(args)
+        return fn(...args)
+      }
+    })
+
+    const postTodo = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+    // type the todo "a test" into the input element
+    // confirm the "a test" todo appears on the page
+    await page.locator('.new-todo').fill('a test')
+    await page.locator('.new-todo').press('Enter')
+    await postTodo
+    page.locator('li.todo', { hasText: 'a test' })
+
+    // get the "addTodo" spy and confirm it was called
+    // with expected argument object
+    // Question: you know the title and the completed property
+    // but how do you know the ID?
+    // @ts-ignore
+    await page.waitForFunction(() => window.addTodoArgs.length > 0)
+    // @ts-ignore
+    const args = await page.evaluate(() => window.addTodoArgs[0])
+    expect(args, 'ADD_TODO argument').toEqual([
+      {
+        completed: false,
+        title: 'a test',
+        id: expect.any(String),
+      },
+    ])
+  })
+})
+
+
+
+================================================
+FILE: pw/test-isolation-false.spec.ts
+================================================
+// this test is simply blasphemous..
+
+import { test, type Page, expect } from '@playwright/test'
+const todos = require('../fixtures/three.json')
+// const isCI = require('is-ci')
+
+// confirm there are more than 1 todos
+expect(todos.length, 'number of todos').toBeGreaterThan(1)
+
+test.describe.configure({ mode: 'serial' })
+
+test.describe('serial run', () => {
+  // if (isCI) {
+  //   test.skip(true, 'Skipping serial tests in CI environment')
+  // }
+  // reuse the same page for all tests
+  let page: Page
+
+  test.beforeAll(async ({ browser, request }) => {
+    page = await browser.newPage()
+    await request.post('/reset', { data: { todos } })
+  })
+
+  test.afterAll(async () => {
+    // do not forget to clean up
+    await page.close()
+  })
+
+  test('shows the list of todos', async () => {
+    await page.goto('/')
+    // confirm the number of todos shown
+    await expect(page.locator('.todo')).toHaveCount(todos.length)
+    // confirm the all todos are active (do not have class completed)
+    await expect(page.locator('.todo:not(.completed)')).toHaveCount(
+      todos.length - 1,
+    )
+    // there should be no completed todos
+    await expect(page.locator('.todo.completed')).toHaveCount(todos.length - 2)
+  })
+
+  test('completes the first todo', async () => {
+    // find the first todo and click on its ".toggle" button
+    await page.locator('.todo .toggle').first().click()
+    // the first todo should get the class "completed"
+    await expect(page.locator('.todo').first()).toHaveClass(/completed/)
+  })
+
+  test('clears completed todos', async () => {
+    // click on the button with the text "Clear completed"
+    await page.getByText('Clear completed').click()
+    // the number of todos should go down by 1
+    await expect(page.locator('.todo')).toHaveCount(todos.length - 2)
+    // there should be no completed todos
+    await expect(page.locator('.todo.completed')).toHaveCount(0)
+  })
+})
+
+
+
+================================================
+FILE: pw/todos-sort_KEY_allTextContents_toPass.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import type { Locator } from '@playwright/test'
+import { test, expect } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+const { map, path, pipe, invoker } = require('ramda')
+
+test.describe('App', () => {
+  let todos: Locator
+  test.beforeEach(async ({ page, resetAndVisit }) => {
+    await resetAndVisit(items)
+    todos = page.locator('.todo-list li')
+  })
+
+  test('shows items sorted by price', async () => {
+    // confirm there are several items
+    // and parse each item's title to get the prices
+    // and confirm they are sorted in the ascending order
+    await expect(async () => {
+      const titles = await todos.allTextContents() // or todos.allInnerTexts
+      const matches = titles.map((s) => s.match(/\$(?<price>\d+)/))
+      const strings = matches.map((m) => m?.groups?.price)
+      const prices = strings.map((s) => (s ? parseFloat(s) : 0))
+      const sorted = structuredClone(prices).sort() // doesn't mutate the original prices
+      console.log(sorted)
+
+      expect(sorted, 'sorted from min to max').toEqual(prices)
+    }).toPass()
+  })
+
+  test('ramda version - shows items sorted by price', async () => {
+    await expect(async () => {
+      const titles = await todos.allTextContents() // or todos.allInnerTexts
+      const prices = pipe(
+        map(invoker(1, 'match')(/\$(\d+(\.\d+)?)/)),
+        map(path([1])),
+        map(parseFloat),
+      )(titles)
+      const sorted = structuredClone(prices).sort()
+      expect(sorted, 'sorted from min to max').toEqual(prices)
+    }).toPass()
+  })
+
+  test('shows the items with css class', async () => {
+    // from the list of items get the list of titles
+    // and the list of CSS classes each item element should have
+    // completed? "todo" + "completed"
+    // incomplete? just "todo"
+    const titles = items.map((item) => item.title)
+    const cssClasses = items.map((item) =>
+      item.completed ? 'todo completed' : 'todo',
+    )
+
+    // confirm the todo items have the titles and the class names
+    await expect(todos).toHaveText(titles)
+    // timeouts in PW: timeout is added directly to the assertion
+    await expect(todos).toHaveClass(cssClasses, { timeout: 7000 })
+  })
+})
+
+
+
+================================================
+FILE: pw/todos-uncertain-number_KEY_toHaveCountAbove_poll_toPass.spec.ts
+================================================
+// @ts-check
+// There is Playwright built-in assertion toHaveCount(n),
+// but we don't have the precise number, we just want to confirm the number of items is larger than 2.
+
+import type { Todo } from '../@types/todo'
+import type { Locator } from '@playwright/test'
+import { test } from './support/fixtures'
+const items: Todo[] = require('../fixtures/three.json')
+const baseExpect = require('@playwright/test').expect
+
+test.describe('App ', () => {
+  test.beforeEach(async ({ page, request }) => {
+    await request.post('/reset', { data: { todos: items } })
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+  })
+
+  test('shows more than 2 items at the start - easy version', async ({
+    page,
+  }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+
+    expect(await todos.count()).toBeGreaterThan(2)
+  })
+
+  // WHY TRY SO HARD?
+  test('shows more than 2 items at the start', async ({ page }) => {
+    // common locators
+    const todos = page.locator('.todo-list li')
+
+    // assume that we don't know the exact number but we expect more than 2 items
+
+    // solution 1: using custom matcher
+    await expect(todos).toHaveCountAbove(2)
+
+    // solution 2: using expect.poll to get the count of items
+    await expect
+      .poll(async () => (await todos.count()) > 2, {
+        message: 'More than 2 items',
+        timeout: 4_000,
+      })
+      .toBeTruthy()
+
+    // solution 3: using expect.toPass and an inner assertion
+    await expect(async () => {
+      const count = await todos.count()
+      expect(count).toBeGreaterThan(2)
+    }).toPass()
+  })
+})
+
+const expect = baseExpect.extend({
+  async toHaveCountAbove(locator: Locator, n: number) {
+    const assertionName = 'toHaveCountAbove'
+    let matcherResult
+
+    const count = await locator.count()
+    const pass = count > n
+
+    const message = pass
+      ? () =>
+          this.utils.matcherHint(assertionName, undefined, undefined, {
+            isNot: this.isNot,
+          }) +
+          '\n\n' +
+          `Locator: ${locator}\n` +
+          `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(
+            n,
+          )}\n` +
+          (matcherResult
+            ? // @ts-ignore
+              `Received: ${this.utils.printReceived(matcherResult.actual)}`
+            : '')
+      : () =>
+          this.utils.matcherHint(assertionName, undefined, undefined, {
+            isNot: this.isNot,
+          }) +
+          '\n\n' +
+          `Locator: ${locator}\n` +
+          `Expected: ${this.utils.printExpected(n)}\n` +
+          (matcherResult
+            ? // @ts-ignore
+              `Received: ${this.utils.printReceived(matcherResult.actual)}`
+            : '')
+
+    return {
+      message,
+      pass,
+      name: assertionName,
+      n,
+      actual: count,
+    }
+  },
+})
+
+
+
+================================================
+FILE: pw/window-propery-apptodos_KEY_pageEvaluate_window_OmitOpposite.spec.ts
+================================================
+import type { Todo } from '../@types/todo'
+import { test, expect } from './support/fixtures'
+const todos: Todo[] = require('../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ resetAndVisit }) => {
+    await resetAndVisit(todos)
+  })
+  test('gets the todos from the application', async ({ page }) => {
+    // get the list of todos from the application
+    // using the "window.appTodos" property
+    // @ts-ignore
+    // const appTodos = await page.evaluate(() => window.appTodos)
+    const appTodos = await page.evaluate(() => window.appTodos)
+
+    // confirm that the todo titles you got from the app
+    // are the same as the titles in the loaded todos fixture
+    const titles = appTodos.map((t: Todo) => t.title)
+    const expectedTitles = todos.map((t: Todo) => t.title)
+    expect(titles).toEqual(expectedTitles)
+
+    // confirm that each item in the todos list points at the list
+    // via the "list" property
+    // the opposite of Omit<Todo, 'list'>  is  Todo & { list: Todo[]}
+    appTodos.forEach((todo: Todo & { list: Todo[] }, k: number) => {
+      expect(todo.list, `item ${k + 1}`).toEqual(appTodos)
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/api-e2e/crud-todo-helper-version.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+import type { Todo } from '../../@types/todo'
+
+test.describe('Todo API', () => {
+  const newTodo = { title: 'Write more tests with pw', completed: false }
+  const updatedTodo = { title: 'Write updated tests with pw', completed: true }
+
+  test('should crud a todo', async ({ apiRequest }) => {
+    const { body: postBody, status: postStatus } = await apiRequest({
+      method: 'POST',
+      url: '/todos',
+      body: newTodo,
+    })
+    const { id } = postBody as Todo
+
+    expect(postStatus).toBe(201)
+    expect(postBody).toMatchObject({
+      ...newTodo,
+      id: expect.any(String),
+    })
+
+    // get all todos
+    const { body: getAllBody, status: getAllStatus } = await apiRequest({
+      method: 'GET',
+      url: '/todos',
+    })
+    expect(getAllStatus).toBe(200)
+    expect((getAllBody as Todo[]).length).toBeGreaterThanOrEqual(1)
+
+    // get one todo
+    const { body: getBody, status: getStatus } = await apiRequest({
+      method: 'GET',
+      url: `/todos/${id}`,
+    })
+    expect(getStatus).toBe(200)
+    expect(getBody).toMatchObject({
+      ...newTodo,
+      id,
+    })
+
+    // update the todo
+    const { body: putBody, status: putStatus } = await apiRequest({
+      method: 'PUT',
+      url: `/todos/${id}`,
+      body: updatedTodo,
+    })
+    expect(putStatus).toBe(200)
+    expect(putBody).toMatchObject({
+      ...updatedTodo,
+      id,
+    })
+
+    // get the updated todo
+    const { body: getUpdatedTodoBody, status: getUpdatedTodoStatus } =
+      await apiRequest({
+        method: 'GET',
+        url: `/todos/${id}`,
+      })
+    expect(getUpdatedTodoStatus).toBe(200)
+    expect(getUpdatedTodoBody).toMatchObject({ ...updatedTodo, id })
+
+    // delete the todo
+    const { status: deleteStatus } = await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+    expect(deleteStatus).toBe(200)
+
+    // confirm the todo is gone
+    const { status: getDeletedTodoStatus } = await apiRequest({
+      method: 'GET',
+      url: `/todos/${id}`,
+    })
+    expect(getDeletedTodoStatus).toBe(404)
+  })
+})
+
+
+
+================================================
+FILE: pw/api-e2e/crud-todo.spec.js
+================================================
+// @ts-check
+const { test, expect } = require('@playwright/test')
+
+test.describe('Todo API', () => {
+  const newTodo = { title: 'Write more tests with pw', completed: false }
+  const updatedTodo = { title: 'Write updated tests with pw', completed: true }
+
+  test('should crud a todo', async ({ request }) => {
+    const post = await request.post('/todos', { data: newTodo })
+    const postBody = await post.json()
+    const postStatus = post.status()
+    const { id } = postBody
+
+    expect(postStatus).toBe(201)
+    expect(postBody).toMatchObject({
+      ...newTodo,
+      id: expect.any(String),
+    })
+
+    // get all todos
+    const getAll = await request.get('/todos')
+    const getAllBody = await getAll.json()
+    const getAllStatus = getAll.status()
+
+    expect(getAllStatus).toBe(200)
+    expect(getAllBody.length).toBeGreaterThanOrEqual(1)
+
+    // get one todo
+    const get = await request.get(`/todos/${id}`)
+    const getBody = await get.json()
+    const getStatus = get.status()
+
+    expect(getStatus).toBe(200)
+    expect(getBody).toMatchObject({
+      ...newTodo,
+      id,
+    })
+
+    // update the todo
+    const put = await request.put(`/todos/${id}`, {
+      data: updatedTodo,
+    })
+    const putBody = await put.json()
+    const putStatus = put.status()
+
+    expect(putStatus).toBe(200)
+    expect(putBody).toMatchObject({
+      ...updatedTodo,
+      id,
+    })
+
+    // get the updated todo
+    const getUpdatedTodo = await request.get(`/todos/${id}`)
+    const getUpdatedTodoBody = await getUpdatedTodo.json()
+    const getUpdatedTodoStatus = getUpdatedTodo.status()
+
+    expect(getUpdatedTodoStatus).toBe(200)
+    expect(getUpdatedTodoBody).toMatchObject({
+      ...updatedTodo,
+      id,
+    })
+
+    // delete the todo
+    const deleteRes = await request.delete(`/todos/${id}`)
+    const deleteResStatus = deleteRes.status()
+    expect(deleteResStatus).toBe(200)
+
+    // confirm the todo is gone
+    const getDeletedTodoRes = await request.get(`/todos/${id}`)
+    expect(getDeletedTodoRes.status()).toBe(404)
+  })
+})
+
+
+
+================================================
+FILE: pw/network/load-error-spy-on-console_KEY_toPass_spyOn.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  test('logs a server error', async ({ page }) => {
+    // stub the "GET /todos" route and return
+    // an object with status code 500
+    // and the body "server error"
+    // spy on the "GET /todos" resource
+    await page.route('/todos', (route) =>
+      route.fulfill({
+        status: 500,
+        body: 'server error',
+      }),
+    )
+    const load = page.waitForResponse('/todos')
+
+    // set up an array to collect all text the app
+    // prints using "console.error()" method
+    // https://playwright.dev/docs/api/class-consolemessage
+    const errorMessages: string[] = []
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        errorMessages.push(msg.text())
+      }
+    })
+
+    // visit the page
+    await page.goto('/')
+    // and wait for the "GET /todos" call
+    await load
+
+    // retry checking the error messages array
+    // to find the message "server error"
+    // that the application should print when it receives
+    // an error response from the backend
+    await expect(() => expect(errorMessages).toContain('server error')).toPass()
+  })
+
+  test('network console-spy helpers version - logs a server error', async ({
+    page,
+    spyOn,
+    interceptNetworkCall,
+  }) => {
+    // Stub the "GET /todos" route and return an object with status code 500
+    const load = interceptNetworkCall({
+      method: 'GET',
+      url: '/todos',
+      fulfillResponse: {
+        status: 500,
+        body: 'server error',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      },
+    })
+
+    // Set up a spy on console.error using the helper
+    const errorMessages = await spyOn('console', 'error')
+
+    // Visit the page
+    await page.goto('/')
+    await load
+
+    // retry checking the error messages array
+    // to find the message "server error"
+    // that the application should print when it receives
+    // an error response from the backend
+    // with spyOn utility, errorMessages comes in as an array of arrays, we need to flatten it
+    await expect(() =>
+      expect(errorMessages.flat()).toContain('server error'),
+    ).toPass()
+  })
+})
+
+
+
+================================================
+FILE: pw/network/load_KEY_waitFor-state-visible.spec.ts
+================================================
+import { test } from '../support/fixtures'
+
+test.describe('App', () => {
+  test('shows a loader', async ({ page }) => {
+    // intercept the "/todos" call
+    // and delay it by 2 seconds before
+    // allowing it to continue to the server
+    await page.route('./todos', (route) =>
+      setTimeout(() => route.continue(), 2000),
+    )
+
+    // spy on the "/todos" network call
+    const loading = page.waitForResponse('/todos')
+
+    await page.goto('/')
+
+    // confirm the loading element is visible
+    await page.locator('.loading').waitFor({ state: 'visible' })
+    // confirm the "/todos" call has happened
+    await loading
+    // confirm loading element becomes hidden
+    await page.locator('.loading').waitFor({ state: 'hidden' })
+
+    // confirm the app finishes loading
+  })
+})
+
+
+
+================================================
+FILE: pw/network/modify-server-response_KEY_toPass.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  test('inserts the first todo', async ({ page, apiRequest }) => {
+    const todos = page.locator('.todo-list li')
+    const title = 'The first one!'
+
+    // spy on the "GET /todos" network call
+    // once the response arrives, confirm it is an array
+    // and insert a new object at the first position:
+    // title, completed=false, id="1234"
+    // https://playwright.dev/docs/mock
+    const id = '1234'
+    await page.route('/todos', async (route) => {
+      const response = await route.fetch()
+      const json = await response.json()
+      json.unshift({ title, completed: false, id })
+      // Fulfill using the original response, while patching the response body
+      // with the given JSON object.
+      await route.fulfill({ response, json })
+    })
+
+    await page.goto('/')
+    // confirm there is at least one todo
+    // and the first todo element
+    // has the title text
+    // and has the class "todo"
+    // and does not have class "completed"
+
+    await expect(async () => {
+      const n = await todos.count()
+      expect(n).toBeGreaterThan(0)
+      const first = todos.first()
+      await expect(first).toHaveText(title)
+      await expect(first).toHaveClass(/todo/)
+      await expect(first).not.toHaveClass(/completed/)
+    }).toPass()
+
+    // clean up
+    await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/network/same-response.spec.ts
+================================================
+import type { TodoPostRequest } from '../../@types/todo'
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  test('responds with the same data on posting new item', async ({
+    page,
+    apiRequest,
+  }) => {
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+
+    // spy on the "POST /todos" call
+    const post = page.waitForRequest(
+      (req) => req.method() === 'POST' && req.url().endsWith('/todos'),
+    )
+    // enter a new todo "Test"
+    await page.locator('input.new-todo').fill('A task')
+    await page.locator('input.new-todo').press('Enter')
+
+    // wait for the POST call to happen
+    // get the send data and the response data
+    // and confirm they are the same
+    const request = await post
+    const response = await request.response()
+    const requestJson = await request.postDataJSON()
+    const responseJson = await response?.json()
+    expect(requestJson).toEqual(responseJson)
+
+    // clean up
+    const id = requestJson.id
+    await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+  })
+
+  test('network helpers version - responds with the same data on posting new item', async ({
+    page,
+    interceptNetworkCall,
+    apiRequest,
+  }) => {
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+    // spy on the "POST /todos" call
+    const post = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+
+    // enter a new todo "Test"
+    await page.locator('input.new-todo').fill('A task')
+    await page.locator('input.new-todo').press('Enter')
+
+    // enter a new todo "Test"
+    // wait for the POST call to happen
+    // get the send data and the response data
+    // and confirm they are the same
+    const { responseJson, requestJson } = await post
+    expect(requestJson).toEqual(responseJson)
+
+    const id = (requestJson as TodoPostRequest).id
+    await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/network/spy-on-math-random_KEY_pageEvaluate_MathRandom.spec.ts
+================================================
+// @ts-check
+
+import { test, expect } from '../support/fixtures'
+const items = require('../../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ request, page }) => {
+    await request.post('/reset', { data: { todos: items } })
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+  })
+
+  test('confirms the entire sent Todo object', async ({ page }) => {
+    // start spying on the network requests to "/todos"
+    const post = page.waitForRequest('/todos')
+    // https://playwright.dev/docs/api/class-page
+    // using the "page.evaluate" method
+    // inject into the application's window a script
+    // that replaces "window.Math.random" method with a dummy
+    // function that:
+    // - calls the real Math.random() to generate a random float
+    // - stores the newly created random float
+    // - returns the created random float to the caller
+    // Tip: to later be able to read the generated float
+    // stores it as a property of the window object
+    await page.evaluate(() => {
+      const rand = Math.random
+      Math.random = () => {
+        // @ts-ignore
+        window.lastRandom = rand()
+        // @ts-ignore
+        return window.lastRandom
+      }
+    })
+    // type new type "Code" into the input box
+    await page.locator('input.new-todo').fill('Code')
+    await page.locator('input.new-todo').press('Enter')
+    // by now, the Math.random should have been called by the application
+    // use the "page.evaluate" to get the saved valued
+    // which is the random number the app used to derive the todo "id"
+    // use the same logic to form the string item ID value
+    const id = await page.evaluate(() =>
+      // @ts-ignore
+      String(window.lastRandom).substr(2, 10),
+    )
+    // log the id the app received
+    console.log(`new item id ${id}`)
+    // wait for the network call to post the new todo
+    const request = await post
+    // get the post network request data
+    const data = request.postDataJSON()
+    // and confirm ALL its fields
+    expect(data, 'posted').toEqual({
+      title: 'Code',
+      completed: false,
+      id,
+    })
+  })
+
+  test('network helper version confirms the entire sent Todo object', async ({
+    page,
+    interceptNetworkCall,
+  }) => {
+    // start spying on the network requests to "/todos"
+    const post = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+
+    await page.evaluate(() => {
+      const rand = Math.random
+      Math.random = () => {
+        // @ts-ignore
+        window.lastRandom = rand()
+        // @ts-ignore
+        return window.lastRandom
+      }
+    })
+    // type new type "Code" into the input box
+    await page.locator('input.new-todo').fill('Code')
+    await page.locator('input.new-todo').press('Enter')
+    // by now, the Math.random should have been called by the application
+    // use the "page.evaluate" to get the saved valued
+    // which is the random number the app used to derive the todo "id"
+    // use the same logic to form the string item ID value
+    const id = await page.evaluate(() =>
+      // @ts-ignore
+      String(window.lastRandom).substr(2, 10),
+    )
+    // log the id the app received
+    console.log(`new item id ${id}`)
+
+    const { responseJson } = await post
+    expect(responseJson).toEqual({
+      title: 'Code',
+      completed: false,
+      id,
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/network/stub-3-ways.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  test('stubs the load data network call three different ways', async ({
+    page,
+  }) => {
+    const todos = page.locator('.todo-list li')
+
+    // stub the "GET /todos" network call
+    // on the first call return the data from the "fixtures/one.json" file
+    // on the second call return the data from the "fixtures/two.json" file
+    // on the third call return the data from the "fixtures/three.json" file
+    let k = 0
+    await page.route('/todos', (route) => {
+      k += 1
+      switch (k) {
+        case 1:
+          return route.fulfill({ path: './fixtures/one.json' })
+        case 2:
+          return route.fulfill({ path: './fixtures/two.json' })
+        default:
+          return route.fulfill({ path: './fixtures/three.json' })
+      }
+    })
+    // load the page
+    // and confirm only 1 todo is shown
+    await page.goto('/')
+    await expect(todos).toHaveCount(1)
+    // reload the page
+    // confirm there are 2 todos
+    await page.reload()
+    await expect(todos).toHaveCount(2)
+    // reload the page
+    // confirm there are 3 todos
+    await page.reload()
+    await expect(todos).toHaveCount(3)
+    // reload the page one more time
+    // and confirm the 3 todos are still there
+    await page.reload()
+    await expect(todos).toHaveCount(3)
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-compare.spec.ts
+================================================
+import type { Page } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
+import type { TodoPostResponse } from '../../@types/todo'
+const items = require('../../fixtures/three.json')
+
+test.describe('App', () => {
+  test.beforeEach(async ({ page, request }) => {
+    await request.post('/reset', { data: { todos: items } })
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+  })
+
+  const addTodo = async (page: Page, todo: string) => {
+    await page.locator('input.new-todo').fill(todo)
+    await page.locator('input.new-todo').press('Enter')
+  }
+
+  test('assigns a different id to each new item', async ({ page }) => {
+    // spy on the first call to "POST /todos"
+    const routeMatcher = (req: { method: () => string; url: () => string }) =>
+      req.method() === 'POST' && req.url().endsWith('/todos')
+    const postTodo1 = page.waitForRequest(routeMatcher)
+
+    // add new todo with text "first todo"
+    await addTodo(page, 'first todo')
+
+    // get the request id sent by the application
+    // from the network call "post-todo", confirm it is a string
+    const id1 = (await postTodo1).postDataJSON().id
+    expect(id1).toEqual(expect.any(String))
+
+    // spy on the second call to "POST /todos"
+    const postTodo2 = page.waitForRequest(routeMatcher)
+    // add new todo with text "second todo"
+    await addTodo(page, 'second todo')
+
+    // get the request id from the second todo sent by the application
+    // confirm it is a string and it is different from the first request
+    const id2 = (await postTodo2).postDataJSON().id
+    expect(id2).toEqual(expect.any(String))
+    expect(id2).not.toEqual(id1)
+  })
+
+  test('network helpers version - assigns a different id to each new item', async ({
+    page,
+    interceptNetworkCall,
+  }) => {
+    // spy on the first call to "POST /todos"
+    const postTodo1 = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+
+    // add new todo with text "first todo"
+    await addTodo(page, 'first todo')
+
+    // get the request id sent by the application
+    // from the network call "post-todo", confirm it is a string
+    const {
+      responseJson: { id: id1 },
+    } = (await postTodo1) as TodoPostResponse
+    expect(id1).toEqual(expect.any(String))
+
+    // spy on the second call to "POST /todos"
+    const postTodo2 = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+    // add new todo with text "second todo"
+    await addTodo(page, 'second todo')
+
+    // get the request id from the second todo sent by the application
+    // confirm it is a string and it is different from the first request
+    const {
+      responseJson: { id: id2 },
+    } = (await postTodo2) as TodoPostResponse
+    expect(id2).not.toEqual(id1)
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-delete_KEY_hasText_hover_not_toBeAttached.spec.ts
+================================================
+import type { TodoPostResponse } from '../../@types/todo'
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+    // do a hard wait (this is an anti pattern, but to run all examples together in parallel...)
+    // await new Promise((resolve) => setTimeout(resolve, 2000))
+  })
+
+  test('deletes a todo', async ({ page, addTodo }) => {
+    const title = 'Advance ' + Math.round(Math.random() * 1e6)
+
+    // spy on the "POST /todos" network call
+    const postTodo = page.waitForRequest(
+      (req) => req.method() === 'POST' && req.url().endsWith('/todos'),
+    )
+
+    // enter the new todo with a random title
+    await addTodo(title)
+
+    // wait for the post call and get the todo item id
+    const postRequest = await postTodo
+    const postResponse = await postRequest.response()
+    const postResponseJson = await postResponse?.json()
+    const id = postResponseJson.id
+
+    // spy on the "DELETE /todos/:id" network call
+    const deleteTodo = page.waitForRequest(
+      (req) => req.method() === 'DELETE' && req.url().endsWith(`/todos/${id}`),
+    )
+
+    // find the newly entered todo item and click on the delete button
+    const todoElement = page.locator('li.todo', { hasText: title })
+    await todoElement.hover()
+    await todoElement.locator('.destroy').click()
+
+    // confirm the delete network call happens
+    // and the server responded with the status code 200
+    const deleteRequest = await deleteTodo
+    const deleteResponse = await deleteRequest.response()
+    const deleteResponseStatus = deleteResponse?.status()
+    expect(deleteResponseStatus).toBe(200)
+
+    // confirm the new todo is no longer on the page
+    await expect(todoElement).not.toBeAttached()
+  })
+
+  test('network helpers version - deletes a todo', async ({
+    page,
+    interceptNetworkCall,
+    addTodo,
+  }) => {
+    const title = 'Advance ' + Math.round(Math.random() * 1e6)
+
+    // spy on the "POST /todos" network call
+    const postTodo = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+
+    // enter the new todo with a random title
+    await addTodo(title)
+
+    // wait for the post call and get the todo item id
+    const {
+      responseJson: { id },
+    } = (await postTodo) as TodoPostResponse
+
+    // spy on the "DELETE /todos/:id" network call
+    const deleteTodo = interceptNetworkCall({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+
+    // find the newly entered todo item, and click on the delete button
+    const todoElement = page.locator('li.todo', { hasText: title })
+    await todoElement.hover()
+    await todoElement.locator('.destroy').click()
+
+    // confirm the delete network call happens
+    // and the server responded with the status code 200
+    const { status } = await deleteTodo
+    expect(status).toBe(200)
+
+    // confirm the new todo is no longer on the page
+    await expect(todoElement).not.toBeAttached()
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-spy-and-add-network-helper-version.spec.ts
+================================================
+import type { TodoPostRequest } from '../../@types/todo'
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  // let loadSpy // is it really needed?
+  test.beforeEach(async ({ page, interceptNetworkCall }) => {
+    const load = interceptNetworkCall({
+      method: 'GET',
+      url: '/todos',
+      fulfillResponse: {
+        status: 200,
+        body: [],
+      },
+    })
+
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+    await expect(page.locator('.todo-list li')).toHaveCount(0)
+    await load
+  })
+
+  test('shows the items with css class', async ({
+    addTodo,
+    apiRequest,
+    interceptNetworkCall,
+  }) => {
+    // spy on the "POST /todos" call
+    const postTodo = interceptNetworkCall({
+      method: 'POST',
+      url: '/todos',
+    })
+
+    // add an item
+    await addTodo('Learn testing')
+    // confirm the new todo was sent over the network
+    const { requestJson, response } = await postTodo
+
+    // get the request data and confirm the known properties "title" and "completed"
+    // confirm the request body includes the property "id", as string
+    expect(requestJson).toEqual({
+      title: 'Learn testing',
+      completed: false,
+      id: expect.any(String),
+    })
+    // confirm the server responds with status code 201
+    expect(response?.status()).toBe(201)
+
+    // clean up
+    const id = (requestJson as TodoPostRequest).id
+    await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-spy-and-add.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+
+test.describe('App', () => {
+  // let loadSpy // is it really needed?
+  test.beforeEach(async ({ page }) => {
+    // intercept the route "/todos"
+    // - "GET /todos" respond with an empty list
+    // - otherwise let the request continue
+    await page.route('/todos', async (route) => {
+      if (route.request().method() === 'GET') {
+        return route.fulfill({
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify([]),
+        })
+      } else {
+        await route.continue()
+      }
+    })
+    const load = page.waitForResponse(
+      (response) =>
+        response.url().includes('/todos') &&
+        response.request().method() === 'GET' &&
+        response.status() === 200,
+    )
+
+    await page.goto('/')
+    await page.locator('.loaded').waitFor()
+    await expect(page.locator('.todo-list li')).toHaveCount(0)
+    await load
+  })
+
+  test('shows the items with css class', async ({
+    page,
+    addTodo,
+    apiRequest,
+  }) => {
+    // spy on the "POST /todos" call
+    const postTodo = page.waitForRequest(
+      (req) => req.method() === 'POST' && req.url().endsWith('/todos'),
+    )
+
+    // add an item
+    await addTodo('Learn testing')
+    // confirm the new todo was sent over the network
+    const request = await postTodo
+    const response = await request.response()
+    // get the request data and confirm the known properties "title" and "completed"
+    // confirm the request body includes the property "id", as string
+    expect(request.postDataJSON()).toEqual({
+      title: 'Learn testing',
+      completed: false,
+      id: expect.any(String),
+    })
+    // confirm the server responds with status code 201
+    expect(response?.status()).toBe(201)
+
+    // clean up
+    const id = request.postDataJSON().id
+    await apiRequest({
+      method: 'DELETE',
+      url: `/todos/${id}`,
+    })
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-spy-network-helper-version.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+import type { InterceptNetworkCall } from '../support/utils/network'
+import type { Todo } from '../../@types/todo'
+
+test.describe('network GET spy - network helpers version', () => {
+  let load: InterceptNetworkCall
+  test.beforeEach(async ({ page, interceptNetworkCall }) => {
+    // spy on the network calls to "/todos" endpoint
+    load = interceptNetworkCall({
+      method: 'GET',
+      url: '/todos',
+    })
+    await page.goto('/')
+  })
+
+  test('shows the same number of items as sent by the server', async ({
+    page,
+  }) => {
+    // confirm the network call has happened and get the response as json
+    // confirm the page shows the same number of todo items as sent by the server
+    const { responseJson: todos } = await load
+
+    await expect(page.locator('.todo-list li')).toHaveCount(
+      (todos as Todo[]).length,
+    )
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-spy.spec.ts
+================================================
+import type { Request } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
+
+test.describe('network GET spy regular version', () => {
+  let load: Promise<Request>
+
+  test.beforeEach(async ({ page }) => {
+    // spy on the network calls to "/todos" endpoint
+    load = page.waitForRequest('/todos')
+    await page.goto('/')
+  })
+
+  test('shows the same number of items as sent by the server', async ({
+    page,
+  }) => {
+    // confirm the network call has happened and get the response as json
+    // confirm the page shows the same number of todo items as sent by the server
+    const request = await load
+    const response = await request.response()
+    const todos = await response?.json()
+
+    await expect(page.locator('.todo-list li')).toHaveCount(todos.length)
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-stub-network-helper-version.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+import type { InterceptNetworkCall } from '../support/utils/network'
+const items = require('../../fixtures/three.json')
+
+test.describe('network GET stub - network helpers version', () => {
+  let load: InterceptNetworkCall
+
+  test.beforeEach(async ({ page, interceptNetworkCall }) => {
+    // set up a route handler for "/todos" endpoint
+    // when the route matches, fulfill it using the loaded items array
+    load = interceptNetworkCall({
+      method: 'GET',
+      url: '/todos',
+      fulfillResponse: {
+        body: items,
+      },
+    })
+
+    await page.goto('/')
+  })
+
+  test('shows the items with css class', async ({ page }) => {
+    // wait for the intercepted network call "load"
+    await load
+
+    // confirm the the number of shown todos is items.length
+    // and that todos show up within 100ms of the load network call
+    await expect(page.locator('.todo-list li')).toHaveCount(items.length)
+  })
+})
+
+
+
+================================================
+FILE: pw/network/todos-stub.spec.ts
+================================================
+import { test, expect } from '../support/fixtures'
+const items = require('../../fixtures/three.json')
+
+test.describe(' - regular version', () => {
+  test.beforeEach(async ({ page }) => {
+    // set up a route handler for "/todos" endpoint
+    // when the route matches, fulfill it using the loaded items array
+    await page.route('/todos', (route) =>
+      route.fulfill({
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items),
+      }),
+    )
+
+    await page.goto('/')
+  })
+
+  test('shows the items with css class', async ({ page }) => {
+    // wait for the intercepted network call "load"
+    await page.waitForResponse('/todos')
+
+    // confirm the the number of shown todos is items.length
+    // and that todos show up within 100ms of the load network call
+    await expect(page.locator('.todo-list li')).toHaveCount(items.length)
+  })
+})
+
+
+
+================================================
+FILE: pw/support/fixtures.ts
+================================================
+import { test as base, mergeTests } from '@playwright/test'
+import { test as baseFixtures } from './fixtures/base-fixtures'
+import { test as resetAndVisit } from './fixtures/ui-fixtures'
+import { test as apiRequestFixture } from './fixtures/api-request-fixture'
+import { test as networkFixture } from './fixtures/network-fixture'
+
+// Merge the fixtures
+const test = mergeTests(
+  resetAndVisit,
+  baseFixtures,
+  apiRequestFixture,
+  networkFixture,
+) // Add new fixtures as arguments
+
+const expect = base.expect
+export { test, expect }
+
+
+
+================================================
+FILE: pw/support/fixture-helpers/plain-functions.ts
+================================================
+import type { APIRequestContext, APIResponse } from '@playwright/test'
+
+/**
+ * Simplified helper for making API requests and returning the status and JSON body.
+ * This helper automatically performs the request based on the provided method, URL, body, and headers.
+ *
+ * @param {Object} params - The parameters for the request.
+ * @param {APIRequestContext} params.request - The Playwright request object, used to make the HTTP request.
+ * @param {string} params.method - The HTTP method to use (POST, GET, PUT, DELETE).
+ * @param {string} params.url - The URL to send the request to.
+ * @param {string} [params.baseUrl] - The base URL to prepend to the request URL.
+ * @param {Record<string, unknown> | null} [params.body=null] - The body to send with the request (for POST and PUT requests).
+ * @param {Record<string, string> | undefined} [params.headers=undefined] - The headers to include with the request.
+ * @returns {Promise<{ status: number; body: unknown }>} - An object containing the status code and the parsed response body.
+ *    - `status`: The HTTP status code returned by the server.
+ *    - `body`: The parsed JSON response body from the server.
+ */
+export async function apiRequest({
+  request,
+  method,
+  url,
+  baseUrl,
+  body = null,
+  headers,
+}: {
+  request: APIRequestContext
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}): Promise<{ status: number; body: unknown }> {
+  let response: APIResponse
+
+  // Common request options
+  const options: {
+    data?: Record<string, unknown> | null
+    headers?: Record<string, string>
+  } = {}
+  if (body) options.data = body
+  if (headers) options.headers = headers
+
+  // Construct full URL
+  const fullUrl = baseUrl ? `${baseUrl}${url}` : url
+
+  // Make the request based on the method
+  switch (method.toUpperCase()) {
+    case 'POST':
+      response = await request.post(fullUrl, options)
+      break
+    case 'GET':
+      response = await request.get(fullUrl, { headers })
+      break
+    case 'PUT':
+      response = await request.put(fullUrl, options)
+      break
+    case 'DELETE':
+      response = await request.delete(fullUrl, { headers })
+      break
+    default:
+      throw new Error(`Unsupported HTTP method: ${method}`)
+  }
+
+  const bodyJson = await response.json()
+  const status = response.status()
+
+  return { status, body: bodyJson }
+}
+
+
+
+================================================
+FILE: pw/support/fixtures/api-request-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import { apiRequest as apiRequestOriginal } from '../fixture-helpers/plain-functions'
+
+export type ApiRequestParams = {
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}
+
+export type ApiRequestResponse<T = unknown> = {
+  status: number
+  body: T
+}
+
+// define the function signature as a type
+type ApiRequestFn = <T = unknown>(
+  params: ApiRequestParams,
+) => Promise<ApiRequestResponse<T>>
+
+// grouping them all together
+type ApiRequestMethods = {
+  apiRequest: ApiRequestFn
+}
+
+export const test = base.extend<ApiRequestMethods>({
+  apiRequest: async ({ request }, use) => {
+    const apiRequestFn: ApiRequestFn = async <T = unknown>({
+      method,
+      url,
+      baseUrl,
+      body = null,
+      headers,
+    }: ApiRequestParams): Promise<ApiRequestResponse<T>> => {
+      const response = await apiRequestOriginal({
+        request,
+        method,
+        url,
+        baseUrl,
+        body,
+        headers,
+      })
+
+      return {
+        status: response.status,
+        body: response.body as T,
+      }
+    }
+
+    await use(apiRequestFn)
+  },
+})
+
+
+
+================================================
+FILE: pw/support/fixtures/base-fixtures.ts
+================================================
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { test as base } from '@playwright/test'
+import {
+  spyOn as spyOnOriginal,
+  stubMethod as stubMethodOriginal,
+} from '../utils/spy-stub-helper'
+
+type SpyOnFn = (objectName: string, method: string) => Promise<any[]>
+type StubMethodFn = (
+  objectName: string,
+  method: string,
+  implementation?: (...args: any[]) => any,
+) => Promise<any[]>
+
+// Extend the base test with our custom fixture
+const test = base.extend<{
+  spyOn: SpyOnFn
+  stubMethod: StubMethodFn
+}>({
+  spyOn: async ({ page }, use) => {
+    const spyOnFn: SpyOnFn = (objectName, method) =>
+      spyOnOriginal(page, objectName, method)
+    await use(spyOnFn)
+  },
+
+  stubMethod: async ({ page }, use) => {
+    const stubMethod: StubMethodFn = (objectName, method, implementation) =>
+      stubMethodOriginal(page, objectName, method, implementation)
+    await use(stubMethod)
+  },
+})
+
+export { test }
+
+/*
+We can have a base fixtures file and we can extend it
+
+// fixtures.ts
+import { mergeTests } from '@playwright/test';
+import { test as baseTest } from './base-fixtures';
+import { test as authTest } from './auth-fixtures';
+import { test as apiTest } from './api-fixtures';
+
+const test = mergeTests(baseTest, authTest, apiTest);
+
+export { test };
+*/
+
+
+
+================================================
+FILE: pw/support/fixtures/network-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import {
+  interceptNetworkCall as InterceptNetworkCallOriginal,
+  type InterceptOptions,
+} from '../utils/network'
+
+// Shared Types
+type InterceptOptionsFixture = Omit<InterceptOptions, 'page'>
+
+// Define the function signature as a type
+type InterceptNetworkCallFn = (
+  options: InterceptOptionsFixture,
+) => ReturnType<typeof InterceptNetworkCallOriginal>
+
+// group the types together
+type InterceptNetworkMethods = {
+  interceptNetworkCall: InterceptNetworkCallFn
+}
+
+// Generic Type Extension
+export const test = base.extend<InterceptNetworkMethods>({
+  interceptNetworkCall: async ({ page }, use) => {
+    const interceptNetworkCallFn: InterceptNetworkCallFn = ({
+      method,
+      url,
+      fulfillResponse,
+      handler,
+    }: InterceptOptionsFixture) =>
+      InterceptNetworkCallOriginal({
+        method,
+        url,
+        fulfillResponse,
+        handler,
+        page,
+      })
+
+    await use(interceptNetworkCallFn)
+  },
+})
+
+
+
+================================================
+FILE: pw/support/fixtures/ui-fixtures.ts
+================================================
+import { test as base } from '@playwright/test'
+import { resetAndVisit as resetAndVisitOriginal } from '../ui-helpers/reset-and-visit'
+import { addTodo as addTodoOriginal } from '../ui-helpers/add-todo'
+import type { Todo } from '../../../@types/todo'
+
+type AddTodoFn = (todo: string) => ReturnType<typeof addTodoOriginal>
+type ResetAndVisitFn = (
+  data: Todo[],
+) => ReturnType<typeof resetAndVisitOriginal>
+
+type Methods = {
+  addTodo: AddTodoFn
+  resetAndVisit: ResetAndVisitFn
+}
+
+// Extend the base test with our custom fixture
+export const test = base.extend<Methods>({
+  // Define the resetAndVisit fixture
+  resetAndVisit: async ({ page, request }, use) => {
+    // Define the function without needing to pass page and request
+    const resetAndVisitFn: ResetAndVisitFn = (data) =>
+      resetAndVisitOriginal({ page, request, data })
+    // Make the function available in the test
+    await use(resetAndVisitFn)
+  },
+
+  addTodo: async ({ page }, use) => {
+    const addTodoFn = (todo: string) => addTodoOriginal(page, todo)
+
+    await use(addTodoFn)
+  },
+})
+
+/*
+We can have a base fixtures file and we can extend it
+
+// fixtures.js
+const { mergeTests } = require('@playwright/test');
+const { test: baseTest } = require('./base-fixtures');
+const { test: authTest } = require('./auth-fixtures');
+const { test: apiTest } = require('./api-fixtures');
+
+const test = mergeTests(baseTest, authTest, apiTest);
+
+module.exports = { test };
+*/
+
+
+
+================================================
+FILE: pw/support/ui-helpers/add-todo.ts
+================================================
+import type { Page } from '@playwright/test'
+
+export const addTodo = async (page: Page, todo: string) => {
+  await page.locator('input.new-todo').fill(todo)
+  await page.locator('input.new-todo').press('Enter')
+}
+
+
+
+================================================
+FILE: pw/support/ui-helpers/reset-and-visit.ts
+================================================
+import type { Page, APIRequestContext } from '@playwright/test'
+import type { Todo } from '../../../@types/todo'
+
+type ResetAndVisitParams = {
+  page: Page
+  request: APIRequestContext
+  data: Todo[]
+}
+
+/**
+ * Resets the database and navigates to the app's home page.
+ *
+ * @param params - The parameters for the function.
+ * @param params.page - The Playwright page object.
+ * @param params.request - The Playwright request object.
+ * @param params.data - The data to reset the database with.
+ */
+export async function resetAndVisit({
+  page,
+  request,
+  data,
+}: ResetAndVisitParams): Promise<void> {
+  await request.post('/reset', { data: { todos: data } })
+  await page.goto('/')
+  await page.locator('body.loaded').waitFor()
+}
+
+
+
+================================================
+FILE: pw/support/utils/network.ts
+================================================
+import type { Page, Request, Response, Route } from '@playwright/test'
+import picomatch from 'picomatch'
+
+export type InterceptNetworkCall = ReturnType<typeof interceptNetworkCall>
+
+type FulfillResponse = {
+  status?: number
+  headers?: Record<string, string>
+  body?: unknown // Can be string, Buffer, or object
+}
+
+type PreparedResponse = {
+  status?: number
+  headers?: Record<string, string>
+  body?: string | Buffer
+}
+
+export type InterceptOptions = {
+  method?: string
+  url?: string
+  page: Page
+  fulfillResponse?: FulfillResponse
+  handler?: (route: Route, request: Request) => Promise<void> | void
+}
+
+export type NetworkCallResult = {
+  request: Request | null
+  response: Response | null
+  responseJson: unknown
+  status: number
+  requestJson: unknown
+}
+
+/**
+ * Intercepts a network request matching the given criteria.
+ * - If `fulfillResponse` is provided, stubs the request and fulfills it with the given response.
+ * - If `handler` is provided, uses it to handle the route.
+ * - Otherwise, observes the request and returns its data.
+ * @param {InterceptOptions} options - Options for matching and handling the request.
+ * @returns {Promise<NetworkCallResult>}
+ */
+export async function interceptNetworkCall({
+  method,
+  url,
+  page,
+  fulfillResponse,
+  handler,
+}: InterceptOptions): Promise<NetworkCallResult> {
+  if (!page) {
+    throw new Error('The `page` argument is required for network interception')
+  }
+
+  if (fulfillResponse || handler) {
+    return fulfillNetworkCall(page, method, url, fulfillResponse, handler)
+  } else {
+    return observeNetworkCall(page, method, url)
+  }
+}
+
+async function fulfillNetworkCall(
+  page: Page,
+  method?: string,
+  url?: string,
+  fulfillResponse?: FulfillResponse,
+  handler?: (route: Route, request: Request) => Promise<void> | void,
+): Promise<NetworkCallResult> {
+  const routePattern = url?.startsWith('**') ? url : `**${url || '*'}`
+  const preparedResponse = prepareResponse(fulfillResponse)
+
+  // Create a promise that will resolve with the request data
+  let resolveRequest: (request: Request) => void
+  const requestPromise = new Promise<Request>((resolve) => {
+    resolveRequest = resolve
+  })
+
+  await page.route(routePattern, async (route, request) => {
+    if (matchesRequest(request, method, url)) {
+      // Capture the request before handling it
+      resolveRequest(request)
+
+      if (handler) {
+        await handler(route, request)
+      } else if (preparedResponse) {
+        await route.fulfill(preparedResponse)
+      }
+    } else {
+      await route.continue()
+    }
+  })
+
+  // Wait for the request to be captured
+  const request = await requestPromise
+  let requestJson = null
+  try {
+    requestJson = await request.postDataJSON()
+  } catch {
+    // Request has no post data or is not JSON
+  }
+
+  return {
+    request,
+    response: null,
+    responseJson: fulfillResponse?.body ?? null,
+    status: fulfillResponse?.status ?? 200,
+    requestJson,
+  }
+}
+
+async function observeNetworkCall(
+  page: Page,
+  method?: string,
+  url?: string,
+): Promise<NetworkCallResult> {
+  const request = await page.waitForRequest((req) =>
+    matchesRequest(req, method, url),
+  )
+
+  const response = await request.response()
+  if (!response) {
+    throw new Error('No response received for the request')
+  }
+
+  let data = null
+  try {
+    const contentType = response.headers()['content-type']
+    if (contentType?.includes('application/json')) {
+      data = await response.json()
+    }
+  } catch {
+    // Response is not JSON
+  }
+
+  let requestJson = null
+  try {
+    requestJson = await request.postDataJSON()
+  } catch {
+    // Request has no post data or is not JSON
+  }
+
+  return {
+    request,
+    response,
+    responseJson: data,
+    status: response.status(),
+    requestJson,
+  }
+}
+
+/** Creates a URL matcher function based on the provided glob pattern.
+ *
+ * @param {string} [pattern] - Glob pattern to match URLs against.
+ * @returns {(url: string) => boolean} - A function that takes a URL and returns whether it matches the pattern.
+ */
+function createUrlMatcher(pattern?: string) {
+  if (!pattern) return () => true
+
+  const globPattern = pattern.startsWith('**') ? pattern : `**${pattern}`
+  const isMatch = picomatch(globPattern)
+
+  return isMatch
+}
+
+/**
+ * Determines whether a network request matches the specified method and URL pattern.
+ *
+ * @param {Request} request - The network request to evaluate.
+ * @param {string} [method] - HTTP method to match.
+ * @param {string} [urlPattern] - URL pattern to match.
+ * @returns {boolean} - `true` if the request matches both the method and URL pattern; otherwise, `false`.
+ */
+function matchesRequest(
+  request: Request,
+  method?: string,
+  urlPattern?: string,
+): boolean {
+  const matchesMethod = !method || request.method() === method
+
+  const matcher = createUrlMatcher(urlPattern) // Step 1: Create the matcher function
+  const matchesUrl = matcher(request.url()) // Step 2: Use the matcher with the URL
+
+  return matchesMethod && matchesUrl
+}
+
+/**
+ * Prepares the response by stringifying the body if it's an object and setting appropriate headers.
+ * @param {FulfillResponse} fulfillResponse - The response details.
+ * @returns {PreparedResponse | undefined} - The prepared response.
+ */
+function prepareResponse(
+  fulfillResponse?: FulfillResponse,
+): PreparedResponse | undefined {
+  if (!fulfillResponse) return undefined
+
+  const { status = 200, headers = {}, body } = fulfillResponse
+  const contentType = headers['Content-Type'] || 'application/json'
+
+  return {
+    status,
+    headers: {
+      'Content-Type': contentType,
+      ...headers,
+    },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  }
+}
+
+
+
+================================================
+FILE: pw/support/utils/spy-stub-helper.ts
+================================================
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Page } from '@playwright/test'
+
+/**
+ * Sets up a spy on a specified method within the page context.
+ * Captures all calls to the method into an array for later assertions.
+ *
+ * @param {Page} page - The Playwright page object.
+ * @param {string} objectName - The name of the object to spy on (e.g., 'console').
+ * @param {string} method - The method to spy on (e.g., 'log').
+ * @returns {Promise<unknown[]>} - A promise that resolves to an array containing the captured calls and their arguments.
+ *
+ * @example
+ * // To spy on console.log:
+ * const logMessages = await spyOn(page, 'console', 'log');
+ *
+ * // Perform actions that trigger console.log in the page context
+ * await page.goto('/');
+ *
+ * // Now, logMessages contains all the arguments passed to console.log
+ * console.log(logMessages);
+ *
+ * @remarks
+ * This function works by:
+ * 1. Exposing a function (`exposedFunctionName`) to the page context.
+ * 2. Injecting a script into the page that overrides the specified method (`objectName[method]`).
+ *    - The overridden method calls the original method to maintain normal functionality.
+ *    - It then calls the exposed function to pass the arguments back to the Node.js context.
+ */
+export async function spyOn(
+  page: Page,
+  objectName: string,
+  method: string,
+): Promise<unknown[]> {
+  const messages: unknown[] = []
+
+  // Create a function in the application's "window" object which pushes its arguments
+  const exposedFunctionName = `${objectName}_${method}_spy`
+  await page.exposeFunction(exposedFunctionName, (...args: unknown[]) =>
+    messages.push(args),
+  )
+
+  // Inject the initial script into the application, which overwrites the specified method
+  await page.addInitScript(
+    ({
+      objectName,
+      method,
+      exposedFunctionName,
+    }: {
+      objectName: string
+      method: string
+      exposedFunctionName: string
+    }) => {
+      const object = (window as any)[objectName] as Record<
+        string,
+        (...args: any[]) => any
+      >
+
+      if (!object || typeof object[method] !== 'function') {
+        throw new Error(`Method ${method} not found on object ${objectName}`)
+      }
+
+      const originalMethod = object[method].bind(object)
+
+      object[method] = (...args: any[]) => {
+        // Call the original method
+        originalMethod(...args)
+        // Pass the arguments to the exposed function
+        ;(window as any)[exposedFunctionName](...args)
+      }
+    },
+    { objectName, method, exposedFunctionName },
+  )
+
+  return messages
+}
+
+/**
+ * Stubs a specified method within the page context.
+ * Replaces the method with a stub that can have custom behavior.
+ * Captures all calls to the method into an array for later assertions.
+ *
+ * @param {Page} page - The Playwright page object.
+ * @param {string} objectName - The name of the object to stub (e.g., 'console').
+ * @param {string} method - The method to stub (e.g., 'log').
+ * @param {(args: any[]) => any} [implementation] - Optional custom implementation for the stubbed method.
+ * @returns {Promise<Array<any>>} - A promise that resolves to an array containing the captured calls and their arguments.
+ */
+export async function stubMethod(
+  page: Page,
+  objectName: string,
+  method: string,
+  implementation?: (...args: any[]) => any,
+): Promise<any[]> {
+  const calls: any[] = []
+
+  // Create a function in the Node.js context that will receive the method arguments from the page context
+  const exposedFunctionName = `${objectName}_${method}_stub`
+  await page.exposeFunction(exposedFunctionName, (...args: any[]) => {
+    calls.push(args)
+  })
+
+  // Inject a script into the page that replaces the specified method with a stub
+  await page.addInitScript(
+    ({
+      objectName,
+      method,
+      exposedFunctionName,
+      hasCustomImpl,
+    }: {
+      objectName: string
+      method: string
+      exposedFunctionName: string
+      hasCustomImpl: boolean
+    }) => {
+      const object = (window as any)[objectName] as Record<
+        string,
+        (...args: any[]) => any
+      >
+
+      if (!object) {
+        throw new Error(`Object ${objectName} not found in window`)
+      }
+
+      object[method] = (...args: any[]) => {
+        // Call the exposed function in the Node.js context to capture the arguments
+        ;(window as any)[exposedFunctionName](...args)
+
+        if (hasCustomImpl) {
+          // If a custom implementation is provided, call it
+          return (window as any)[`customImpl_${exposedFunctionName}`](...args)
+        }
+        // Default behavior: Do nothing or return undefined
+      }
+    },
+    {
+      objectName,
+      method,
+      exposedFunctionName,
+      hasCustomImpl: !!implementation,
+    },
+  )
+
+  // If a custom implementation is provided, expose it to the page context
+  if (implementation) {
+    const customImplName = `customImpl_${exposedFunctionName}`
+    await page.exposeFunction(customImplName, implementation)
+  }
+
+  return calls
+}
+
+
+
+================================================
+FILE: tests-examples/demo-todo-app.spec.js
+================================================
+// @ts-check
+const { test, expect } = require('@playwright/test');
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('https://demo.playwright.dev/todomvc');
+});
+
+const TODO_ITEMS = [
+  'buy some cheese',
+  'feed the cat',
+  'book a doctors appointment'
+];
+
+test.describe('New Todo', () => {
+  test('should allow me to add todo items', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create 1st todo.
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+
+    // Make sure the list only has one todo item.
+    await expect(page.getByTestId('todo-title')).toHaveText([
+      TODO_ITEMS[0]
+    ]);
+
+    // Create 2nd todo.
+    await newTodo.fill(TODO_ITEMS[1]);
+    await newTodo.press('Enter');
+
+    // Make sure the list now has two todo items.
+    await expect(page.getByTestId('todo-title')).toHaveText([
+      TODO_ITEMS[0],
+      TODO_ITEMS[1]
+    ]);
+
+    await checkNumberOfTodosInLocalStorage(page, 2);
+  });
+
+  test('should clear text input field when an item is added', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create one todo item.
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+
+    // Check that input is empty.
+    await expect(newTodo).toBeEmpty();
+    await checkNumberOfTodosInLocalStorage(page, 1);
+  });
+
+  test('should append new items to the bottom of the list', async ({ page }) => {
+    // Create 3 items.
+    await createDefaultTodos(page);
+
+    // create a todo count locator
+    const todoCount = page.getByTestId('todo-count')
+  
+    // Check test using different methods.
+    await expect(page.getByText('3 items left')).toBeVisible();
+    await expect(todoCount).toHaveText('3 items left');
+    await expect(todoCount).toContainText('3');
+    await expect(todoCount).toHaveText(/3/);
+
+    // Check all items in one call.
+    await expect(page.getByTestId('todo-title')).toHaveText(TODO_ITEMS);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+});
+
+test.describe('Mark all as completed', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should allow me to mark all items as completed', async ({ page }) => {
+    // Complete all todos.
+    await page.getByLabel('Mark all as complete').check();
+
+    // Ensure all todos have 'completed' class.
+    await expect(page.getByTestId('todo-item')).toHaveClass(['completed', 'completed', 'completed']);
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+  });
+
+  test('should allow me to clear the complete state of all items', async ({ page }) => {
+    const toggleAll = page.getByLabel('Mark all as complete');
+    // Check and then immediately uncheck.
+    await toggleAll.check();
+    await toggleAll.uncheck();
+
+    // Should be no completed classes.
+    await expect(page.getByTestId('todo-item')).toHaveClass(['', '', '']);
+  });
+
+  test('complete all checkbox should update state when items are completed / cleared', async ({ page }) => {
+    const toggleAll = page.getByLabel('Mark all as complete');
+    await toggleAll.check();
+    await expect(toggleAll).toBeChecked();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+
+    // Uncheck first todo.
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    await firstTodo.getByRole('checkbox').uncheck();
+
+    // Reuse toggleAll locator and make sure its not checked.
+    await expect(toggleAll).not.toBeChecked();
+
+    await firstTodo.getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 3);
+
+    // Assert the toggle all is checked again.
+    await expect(toggleAll).toBeChecked();
+  });
+});
+
+test.describe('Item', () => {
+
+  test('should allow me to mark items as complete', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create two items.
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    // Check first item.
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    await firstTodo.getByRole('checkbox').check();
+    await expect(firstTodo).toHaveClass('completed');
+
+    // Check second item.
+    const secondTodo = page.getByTestId('todo-item').nth(1);
+    await expect(secondTodo).not.toHaveClass('completed');
+    await secondTodo.getByRole('checkbox').check();
+
+    // Assert completed class.
+    await expect(firstTodo).toHaveClass('completed');
+    await expect(secondTodo).toHaveClass('completed');
+  });
+
+  test('should allow me to un-mark items as complete', async ({ page }) => {
+     // create a new todo locator
+     const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // Create two items.
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    const firstTodo = page.getByTestId('todo-item').nth(0);
+    const secondTodo = page.getByTestId('todo-item').nth(1);
+    const firstTodoCheckbox = firstTodo.getByRole('checkbox');
+
+    await firstTodoCheckbox.check();
+    await expect(firstTodo).toHaveClass('completed');
+    await expect(secondTodo).not.toHaveClass('completed');
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    await firstTodoCheckbox.uncheck();
+    await expect(firstTodo).not.toHaveClass('completed');
+    await expect(secondTodo).not.toHaveClass('completed');
+    await checkNumberOfCompletedTodosInLocalStorage(page, 0);
+  });
+
+  test('should allow me to edit an item', async ({ page }) => {
+    await createDefaultTodos(page);
+
+    const todoItems = page.getByTestId('todo-item');
+    const secondTodo = todoItems.nth(1);
+    await secondTodo.dblclick();
+    await expect(secondTodo.getByRole('textbox', { name: 'Edit' })).toHaveValue(TODO_ITEMS[1]);
+    await secondTodo.getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await secondTodo.getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    // Explicitly assert the new text value.
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2]
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+});
+
+test.describe('Editing', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should hide other controls when editing', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item').nth(1);
+    await todoItem.dblclick();
+    await expect(todoItem.getByRole('checkbox')).not.toBeVisible();
+    await expect(todoItem.locator('label', {
+      hasText: TODO_ITEMS[1],
+    })).not.toBeVisible();
+    await checkNumberOfTodosInLocalStorage(page, 3);
+  });
+
+  test('should save edits on blur', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).dispatchEvent('blur');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2],
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+
+  test('should trim entered text', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('    buy some sausages    ');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      'buy some sausages',
+      TODO_ITEMS[2],
+    ]);
+    await checkTodosInLocalStorage(page, 'buy some sausages');
+  });
+
+  test('should remove the item if an empty text string was entered', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Enter');
+
+    await expect(todoItems).toHaveText([
+      TODO_ITEMS[0],
+      TODO_ITEMS[2],
+    ]);
+  });
+
+  test('should cancel edits on escape', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).dblclick();
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).fill('buy some sausages');
+    await todoItems.nth(1).getByRole('textbox', { name: 'Edit' }).press('Escape');
+    await expect(todoItems).toHaveText(TODO_ITEMS);
+  });
+});
+
+test.describe('Counter', () => {
+  test('should display the current number of todo items', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    // create a todo count locator
+    const todoCount = page.getByTestId('todo-count')
+
+    await newTodo.fill(TODO_ITEMS[0]);
+    await newTodo.press('Enter');
+    await expect(todoCount).toContainText('1');
+
+    await newTodo.fill(TODO_ITEMS[1]);
+    await newTodo.press('Enter');
+    await expect(todoCount).toContainText('2');
+
+    await checkNumberOfTodosInLocalStorage(page, 2);
+  });
+});
+
+test.describe('Clear completed button', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+  });
+
+  test('should display the correct text', async ({ page }) => {
+    await page.locator('.todo-list li .toggle').first().check();
+    await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();
+  });
+
+  test('should remove completed items when clicked', async ({ page }) => {
+    const todoItems = page.getByTestId('todo-item');
+    await todoItems.nth(1).getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Clear completed' }).click();
+    await expect(todoItems).toHaveCount(2);
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[2]]);
+  });
+
+  test('should be hidden when there are no items that are completed', async ({ page }) => {
+    await page.locator('.todo-list li .toggle').first().check();
+    await page.getByRole('button', { name: 'Clear completed' }).click();
+    await expect(page.getByRole('button', { name: 'Clear completed' })).toBeHidden();
+  });
+});
+
+test.describe('Persistence', () => {
+  test('should persist its data', async ({ page }) => {
+    // create a new todo locator
+    const newTodo = page.getByPlaceholder('What needs to be done?');
+
+    for (const item of TODO_ITEMS.slice(0, 2)) {
+      await newTodo.fill(item);
+      await newTodo.press('Enter');
+    }
+
+    const todoItems = page.getByTestId('todo-item');
+    const firstTodoCheck = todoItems.nth(0).getByRole('checkbox');
+    await firstTodoCheck.check();
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[1]]);
+    await expect(firstTodoCheck).toBeChecked();
+    await expect(todoItems).toHaveClass(['completed', '']);
+
+    // Ensure there is 1 completed item.
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    // Now reload.
+    await page.reload();
+    await expect(todoItems).toHaveText([TODO_ITEMS[0], TODO_ITEMS[1]]);
+    await expect(firstTodoCheck).toBeChecked();
+    await expect(todoItems).toHaveClass(['completed', '']);
+  });
+});
+
+test.describe('Routing', () => {
+  test.beforeEach(async ({ page }) => {
+    await createDefaultTodos(page);
+    // make sure the app had a chance to save updated todos in storage
+    // before navigating to a new view, otherwise the items can get lost :(
+    // in some frameworks like Durandal
+    await checkTodosInLocalStorage(page, TODO_ITEMS[0]);
+  });
+
+  test('should allow me to display active items', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item');
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+    
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Active' }).click();
+    await expect(todoItem).toHaveCount(2);
+    await expect(todoItem).toHaveText([TODO_ITEMS[0], TODO_ITEMS[2]]);
+  });
+
+  test('should respect the back button', async ({ page }) => {
+    const todoItem = page.getByTestId('todo-item');
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+
+    await test.step('Showing all items', async () => {
+      await page.getByRole('link', { name: 'All' }).click();
+      await expect(todoItem).toHaveCount(3);
+    });
+
+    await test.step('Showing active items', async () => {
+      await page.getByRole('link', { name: 'Active' }).click();
+    });
+
+    await test.step('Showing completed items', async () => {
+      await page.getByRole('link', { name: 'Completed' }).click();
+    });
+
+    await expect(todoItem).toHaveCount(1);
+    await page.goBack();
+    await expect(todoItem).toHaveCount(2);
+    await page.goBack();
+    await expect(todoItem).toHaveCount(3);
+  });
+
+  test('should allow me to display completed items', async ({ page }) => {
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Completed' }).click();
+    await expect(page.getByTestId('todo-item')).toHaveCount(1);
+  });
+
+  test('should allow me to display all items', async ({ page }) => {
+    await page.getByTestId('todo-item').nth(1).getByRole('checkbox').check();
+    await checkNumberOfCompletedTodosInLocalStorage(page, 1);
+    await page.getByRole('link', { name: 'Active' }).click();
+    await page.getByRole('link', { name: 'Completed' }).click();
+    await page.getByRole('link', { name: 'All' }).click();
+    await expect(page.getByTestId('todo-item')).toHaveCount(3);
+  });
+
+  test('should highlight the currently applied filter', async ({ page }) => {
+    await expect(page.getByRole('link', { name: 'All' })).toHaveClass('selected');
+
+    //create locators for active and completed links
+    const activeLink = page.getByRole('link', { name: 'Active' });
+    const completedLink = page.getByRole('link', { name: 'Completed' });
+    await activeLink.click();
+
+    // Page change - active items.
+    await expect(activeLink).toHaveClass('selected');
+    await completedLink.click();
+
+    // Page change - completed items.
+    await expect(completedLink).toHaveClass('selected');
+  });
+});
+
+async function createDefaultTodos(page) {
+  // create a new todo locator
+  const newTodo = page.getByPlaceholder('What needs to be done?');
+
+  for (const item of TODO_ITEMS) {
+    await newTodo.fill(item);
+    await newTodo.press('Enter');
+  }
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {number} expected
+ */
+ async function checkNumberOfTodosInLocalStorage(page, expected) {
+  return await page.waitForFunction(e => {
+    return JSON.parse(localStorage['react-todos']).length === e;
+  }, expected);
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {number} expected
+ */
+ async function checkNumberOfCompletedTodosInLocalStorage(page, expected) {
+  return await page.waitForFunction(e => {
+    return JSON.parse(localStorage['react-todos']).filter(i => i.completed).length === e;
+  }, expected);
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title
+ */
+async function checkTodosInLocalStorage(page, title) {
+  return await page.waitForFunction(t => {
+    return JSON.parse(localStorage['react-todos']).map(i => i.title).includes(t);
+  }, title);
+}
+
+
+
+================================================
+FILE: .github/workflows/cypress.yml
+================================================
+name: Cypress Tests
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # if you want to enable parallelization
+  # CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+concurrency:
+  group: cypress-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cy-e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cypress e2e tests 🧪
+        uses: cypress-io/github-action@v6.10.0
+        with:
+          start: npm run start
+          wait-on: 'http://localhost:3000'
+          browser: chrome
+
+
+
+================================================
+FILE: .github/workflows/merge-gatekeeper.yml
+================================================
+# add this job to branch prot
+name: Merge Gatekeeper
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+================================================
+FILE: .github/workflows/playwright.yml
+================================================
+name: Playwright Tests
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: playwright-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pw-e2e-test:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium Only
+        run: npx playwright install chromium
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 3
+
+
+
+================================================
+FILE: .github/workflows/pr-checks.yml
+================================================
+name: Run PR checks
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  VITE_PORT: 3000
+  API_PORT: 3001
+  VITE_API_URL: 'http://localhost:3001'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-dependencies:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: npm ci
+      - name: Cache Node Modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node_modules-${{
+            hashFiles('**/package-lock.json')}}
+          restore-keys: |
+            ${{ runner.os }}-node_modules
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - uses: actions/checkout@v5
+      - name: Restore Node Modules Cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node_modules-${{
+            hashFiles('**/package-lock.json')}}
+      - name: Run Lint
+        run: npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - uses: actions/checkout@v5
+      - name: Restore Node Modules Cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node_modules-${{
+            hashFiles('**/package-lock.json')}}
+      - name: Run Typecheck
+        run: npm run typecheck
+
+

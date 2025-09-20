@@ -1,0 +1,2542 @@
+Directory structure:
+└── muratkeremozcan-pw-book/
+    ├── README.md
+    ├── jest.config.ts
+    ├── package.json
+    ├── playwright.config.ts
+    ├── renovate.json
+    ├── tsconfig.jest.json
+    ├── tsconfig.json
+    ├── .env.example
+    ├── .eslintignore
+    ├── .eslintrc.js
+    ├── .npmrc
+    ├── .nvmrc
+    ├── .prettierrc
+    ├── pw/
+    │   ├── accessibility.spec.ts
+    │   ├── alert.spec.ts
+    │   ├── checkbox.spec.ts
+    │   ├── download-multiple.spec.ts
+    │   ├── download.spec.ts
+    │   ├── drag-and-drop.spec.ts
+    │   ├── dropdown.spec.ts
+    │   ├── iframe-nested.spec.ts
+    │   ├── iframe.spec.ts
+    │   ├── multi-tab.spec.ts
+    │   ├── multi-window.spec.ts
+    │   ├── radiobutton.spec.ts
+    │   ├── shadow-dom.spec.ts
+    │   ├── upload.spec.ts
+    │   ├── window-popup.spec.ts
+    │   ├── api-e2e/
+    │   │   ├── api-example-helper-version.spec.ts
+    │   │   └── api-example.spec.ts
+    │   ├── basic/
+    │   │   ├── assertions.spec.ts
+    │   │   ├── recorded-test-1.spec.ts
+    │   │   ├── recorded-test-2.spec.ts
+    │   │   ├── recorded-test-3.spec.ts
+    │   │   ├── search-product-desktop.spec.ts
+    │   │   └── search-product-playground-desktop.spec.ts
+    │   ├── network/
+    │   │   ├── KEY_networkIdle.spec.ts
+    │   │   ├── mock-request-1.spec.ts
+    │   │   ├── mock-request-2.spec.ts
+    │   │   └── mock-response.spec.ts
+    │   ├── pom-examples/
+    │   │   ├── classic/
+    │   │   │   ├── lambda-test.spec.ts
+    │   │   │   ├── talent-500.spec.ts
+    │   │   │   ├── Pages/
+    │   │   │   │   ├── Home-Page.ts
+    │   │   │   │   ├── Login-Page-Talent-500.ts
+    │   │   │   │   ├── Login-Page.ts
+    │   │   │   │   ├── Product-Cart-Page.ts
+    │   │   │   │   └── Search-Page.ts
+    │   │   │   └── testData/
+    │   │   │       └── testData.json
+    │   │   └── pw-fixture-version/
+    │   │       ├── lambda-test.spec.ts
+    │   │       └── talent-500.spec.ts
+    │   ├── support/
+    │   │   ├── all-fixtures.ts
+    │   │   ├── fixture-helpers/
+    │   │   │   └── plain-functions.ts
+    │   │   └── fixtures/
+    │   │       ├── api-request-fixture.ts
+    │   │       ├── lambda-fixture.ts
+    │   │       └── talent-fixture.ts
+    │   └── visual-testing/
+    │       └── example.spec.ts
+    ├── src/
+    │   └── sanity.test.ts
+    └── .github/
+        └── workflows/
+            ├── burn-in-reusable.yml
+            ├── merge-gatekeeper.yml
+            ├── pr-checks.yml
+            └── pw-e2e.yml
+
+================================================
+FILE: README.md
+================================================
+# Pw examples
+
+```bash
+npm run lint
+npm run typecheck
+npm run fix:format
+npm run validate # all the above in parallel
+
+npm run pw:open       # open mode
+npm run pw:open-debug # open with debug
+npm run pw:run        # run mode
+npm run pw:run-debug  # run with debug
+npm run pw:trace      # drag & drop a trace.zip from local or CI
+npm run pw:codegen    # point-and-click wizard
+npm run pw:clear      # remove all temporary pw files
+npm run pw:run-smoke  # grep run by tag
+npm run pw:burn-in-changed # the new/changed files in this commit (recommended)
+npm run pw:burn-in -- pw/iframe.spec.ts # test burn-in: specific file
+npm run pw:burn-in -- --grep "dropdown" # Run burn-in with pattern
+```
+
+
+
+================================================
+FILE: jest.config.ts
+================================================
+import type { JestConfigWithTsJest } from 'ts-jest'
+
+export const config: JestConfigWithTsJest = {
+  clearMocks: true,
+  testTimeout: 10000,
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.pacttest.ts', // Exclude pacttest files
+    '!**/test-helpers/**', // Exclude test helpers
+    '!**/*.json',
+    '!?(**)/?(*.|*-)types.ts',
+    '!**/models/*',
+    '!**/__snapshots__/*',
+    '!**/scripts/*'
+  ],
+  coverageDirectory: './coverage',
+  coverageReporters: [
+    'clover',
+    'json',
+    'lcov',
+    ['text', { skipFull: true }],
+    'json-summary'
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 0,
+      branches: 0,
+      lines: 0,
+      functions: 0
+    }
+  },
+  moduleDirectories: ['node_modules', 'src'],
+  modulePathIgnorePatterns: ['dist'],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }]
+  },
+  testMatch: ['**/*.test.ts'],
+  testEnvironment: 'node'
+}
+
+export default config
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "pw-book",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Murat Ozcan",
+  "license": "ISC",
+  "scripts": {
+    "prettier": "prettier --ignore-path .gitignore \"**/*.+(js|ts|json)\"",
+    "fix:format": "npm run prettier -- --write",
+    "validate": "npm-run-all --parallel typecheck lint test fix:format",
+    "test": "jest --detectOpenHandles --verbose --silent --config jest.config.ts",
+    "test:watch": "jest --watch --config jest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.jest.json",
+    "lint": "eslint --ext=.js,.ts,.tsx --fix",
+    "pw:open": "npx playwright test --ui",
+    "pw:open-debug": "PWDEBUG=1 npx playwright test --ui",
+    "pw:run": "npx playwright test",
+    "pw:run-debug": "PW_HTML_REPORT=1 npx playwright test --trace on ; npx playwright show-report",
+    "pw:trace": "npx playwright show-trace",
+    "pw:clear": "rm -rf test-results playwright-report playwright/.cache",
+    "pw:codegen": "npx playwright codegen",
+    "pw:run-smoke": "npm run pw:run -- --grep @foo",
+    "pw:burn-in": "PW_MULTI_BROWSER=true npx playwright test --repeat-each=5 --retries=0",
+    "pw:burn-in-changed": "PW_MULTI_BROWSER=true npx playwright test --only-changed=main --repeat-each=5 --retries=0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@esbuild-plugins/node-globals-polyfill": "0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "0.2.2",
+    "@faker-js/faker": "9.4.0",
+    "@playwright/test": "^1.49.1",
+    "@types/is-ci": "^3.0.4",
+    "@types/jest": "29.5.14",
+    "@types/lodash": "4.17.14",
+    "@types/luxon": "^3.4.2",
+    "@types/node": "22.10.10",
+    "@typescript-eslint/eslint-plugin": "8.21.0",
+    "@typescript-eslint/parser": "8.21.0",
+    "dotenv": "16.4.7",
+    "eslint": "8.57.1",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-import-resolver-typescript": "4.2.7",
+    "eslint-plugin-filenames": "1.3.2",
+    "eslint-plugin-implicit-dependencies": "1.1.1",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-no-only-tests": "3.3.0",
+    "eslint-plugin-prettier": "5.2.3",
+    "is-ci": "^4.1.0",
+    "jest": "29.7.0",
+    "lodash": "4.17.21",
+    "luxon": "^3.5.0",
+    "npm-run-all2": "7.0.2",
+    "prettier": "3.4.2",
+    "ts-jest": "29.2.5",
+    "tsx": "^4.19.1",
+    "typescript": "5.7.3"
+  }
+}
+
+
+
+================================================
+FILE: playwright.config.ts
+================================================
+import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+// import dotenv from 'dotenv';
+// import path from 'path';
+// dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  testDir: './pw',
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 5 : 3,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  // use blob for sharding in CI, later it is converted to html
+  // for local use list, but in debug mode give the html report too
+  reporter: process.env.CI
+    ? 'blob'
+    : process.env.PW_HTML_REPORT
+      ? [['list'], ['html']]
+      : 'list',
+  // reporter: [['json', { outputFile: 'results.json' }]],
+
+  timeout: 15000,
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    // baseURL: 'http://127.0.0.1:3000',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'retain-on-failure',
+    video: 'retain-on-failure'
+  },
+  // for visual testing, Ensure snapshots are platform-agnostic
+  snapshotPathTemplate:
+    '{testDir}/{testFileDir}/snapshots/{testFileName}/{testName}-{arg}{ext}',
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] }
+    },
+
+    // Only enable Google Chrome when multi-browser is explicitly enabled
+    ...(process.env.PW_MULTI_BROWSER === 'true' ? [
+      {
+        name: 'google-chrome',
+        use: { ...devices['Desktop Chrome'], channel: 'chrome' }
+      }
+    ] : [])
+
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] }
+    // }
+
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] }
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] }
+    // }
+
+    /* Test against branded browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    // }
+  ]
+
+  /* Run your local dev server before starting the tests */
+  // webServer: {
+  //   command: 'npm run start',
+  //   url: 'http://127.0.0.1:3000',
+  //   reuseExistingServer: !process.env.CI,
+  // },
+})
+
+/*
+
+  // potential setup for runners with higher resources
+  const os = require('os')
+  const isCI = process.env.CI === 'true'
+
+  const config = {
+    workers: isCI ? Math.min(os.cpus().length, 4) : undefined, // Limit to 4 workers in CI
+  };
+
+  */
+
+
+
+================================================
+FILE: renovate.json
+================================================
+{
+  "extends": ["config:base"],
+  "automerge": true,
+  "rebaseWhen": "conflicted",
+  "prHourlyLimit": 2,
+  "updateNotScheduled": false,
+  "timezone": "America/New_York",
+  "schedule": ["after 10pm and before 5am on every weekday", "every weekend"],
+  "masterIssue": true,
+  "labels": ["type: dependencies", "renovate"],
+  "dependencyDashboardApproval": false,
+  "packageRules": [
+    {
+      "groupName": "All Minor and Patch Updates",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}
+
+
+
+================================================
+FILE: tsconfig.jest.json
+================================================
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["**/cypress.d.ts", "**/cypress", "**/*.cy.ts*"],
+  "compilerOptions": {
+    "types": ["@types/jest"]
+  },
+  "include": ["**/*.test.ts*", "**/*.pacttest.ts*"]
+}
+
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "include": [
+    "src",
+    "./jest.config.ts",
+    "./jest-pact.config.ts",
+    "./.eslintrc.js",
+    "cypress",
+    "./cypress/index.d.ts"
+  ],
+  "exclude": ["node_modules", "coverage", "dist", "**/*.*test.ts*"],
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+    /* Projects */
+    // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
+    // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
+    // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
+    // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
+    // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
+    // "disableReferencedProjectLoad": true,             /* Reduce the number of projects loaded automatically by TypeScript. */
+    /* Language and Environment */
+    "target": "es2022" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    // "lib": [],                                        /* Specify a set of bundled library declaration files that describe the target runtime environment. */
+    // "jsx": "preserve",                                /* Specify what JSX code is generated. */
+    // "experimentalDecorators": true,                   /* Enable experimental support for TC39 stage 2 draft decorators. */
+    // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
+    // "jsxFactory": "",                                 /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
+    // "jsxFragmentFactory": "",                         /* Specify the JSX Fragment reference used for fragments when targeting React JSX emit e.g. 'React.Fragment' or 'Fragment'. */
+    // "jsxImportSource": "",                            /* Specify module specifier used to import the JSX factory functions when using 'jsx: react-jsx*'. */
+    // "reactNamespace": "",                             /* Specify the object invoked for 'createElement'. This only applies when targeting 'react' JSX emit. */
+    // "noLib": true,                                    /* Disable including any library files, including the default lib.d.ts. */
+    // "useDefineForClassFields": true,                  /* Emit ECMAScript-standard-compliant class fields. */
+    // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
+    /* Modules */
+    "module": "NodeNext" /* Specify what module code is generated. */,
+    // "rootDir": "./",                                  /* Specify the root folder within your source files. */
+    "moduleResolution": "NodeNext" /* Specify how TypeScript looks up a file from a given module specifier. */,
+    // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
+    // "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
+    // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
+    // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
+    // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
+    // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
+    // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
+    "resolveJsonModule": true /* Enable importing .json files. */,
+    // "allowImportingTsExtensions": true                /* Allow importing .ts files even when they cannot be resolved. */
+    // "noResolve": true,                                /* Disallow 'import's, 'require's or '<reference>'s from expanding the number of files TypeScript should add to a project. */
+    /* JavaScript Support */
+    // "allowJs": true /* Allow JavaScript files to be a part of your program. Use the 'checkJS' option to get errors from these files. */,
+    // "checkJs": true,                                  /* Enable error reporting in type-checked JavaScript files. */
+    // "maxNodeModuleJsDepth": 1,                        /* Specify the maximum folder depth used for checking JavaScript files from 'node_modules'. Only applicable with 'allowJs'. */
+    /* Emit */
+    // "declaration": true,                              /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
+    // "declarationMap": true,                           /* Create sourcemaps for d.ts files. */
+    // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
+    // "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
+    // "outFile": "./",                                  /* Specify a file that bundles all outputs into one JavaScript file. If 'declaration' is true, also designates a file that bundles all .d.ts output. */
+    // "outDir": "./",                                   /* Specify an output folder for all emitted files. */
+    // "removeComments": true,                           /* Disable emitting comments. */
+    "noEmit": true /* Disable emitting files from a compilation. */,
+    // "importHelpers": true,                            /* Allow importing helper functions from tslib once per project, instead of including them per-file. */
+    // "importsNotUsedAsValues": "remove",               /* Specify emit/checking behavior for imports that are only used for types. */
+    // "downlevelIteration": true,                       /* Emit more compliant, but verbose and less performant JavaScript for iteration. */
+    // "sourceRoot": "",                                 /* Specify the root path for debuggers to find the reference source code. */
+    // "mapRoot": "",                                    /* Specify the location where debugger should locate map files instead of generated locations. */
+    // "inlineSourceMap": true,                          /* Include sourcemap files inside the emitted JavaScript. */
+    // "inlineSources": true,                            /* Include source code in the sourcemaps inside the emitted JavaScript. */
+    // "emitBOM": true,                                  /* Emit a UTF-8 Byte Order Mark (BOM) in the beginning of output files. */
+    // "newLine": "crlf",                                /* Set the newline character for emitting files. */
+    // "stripInternal": true,                            /* Disable emitting declarations that have '@internal' in their JSDoc comments. */
+    // "noEmitHelpers": true,                            /* Disable generating custom helper functions like '__extends' in compiled output. */
+    // "noEmitOnError": true,                            /* Disable emitting files if any type checking errors are reported. */
+    // "preserveConstEnums": true,                       /* Disable erasing 'const enum' declarations in generated code. */
+    // "declarationDir": "./",                           /* Specify the output directory for generated declaration files. */
+    // "preserveValueImports": true,                     /* Preserve unused imported values in the JavaScript output that would otherwise be removed. */
+    /* Interop Constraints */
+    // "isolatedModules": true,                          /* Ensure that each file can be safely transpiled without relying on other imports. */
+    "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    // "preserveSymlinks": true,                         /* Disable resolving symlinks to their realpath. This correlates to the same flag in node. */
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+    // "noImplicitAny": true,                            /* Enable error reporting for expressions and declarations with an implied 'any' type. */
+    "strictNullChecks": true /* When type checking, take into account 'null' and 'undefined'. */,
+    "strictFunctionTypes": true /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */,
+    // "strictBindCallApply": true,                      /* Check that the arguments for 'bind', 'call', and 'apply' methods match the original function. */
+    // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */
+    // "noImplicitThis": true,                           /* Enable error reporting when 'this' is given the type 'any'. */
+    // "useUnknownInCatchVariables": true,               /* Default catch clause variables as 'unknown' instead of 'any'. */
+    // "alwaysStrict": true,                             /* Ensure 'use strict' is always emitted. */
+    // "noUnusedLocals": true,                           /* Enable error reporting when local variables aren't read. */
+    // "noUnusedParameters": true,                       /* Raise an error when a function parameter isn't read. */
+    // "exactOptionalPropertyTypes": true /* Interpret optional property types as written, rather than adding 'undefined'. */,
+    // "noImplicitReturns": true,                        /* Enable error reporting for codepaths that do not explicitly return in a function. */
+    // "noFallthroughCasesInSwitch": true,               /* Enable error reporting for fallthrough cases in switch statements. */
+    "noUncheckedIndexedAccess": true /* Add 'undefined' to a type when accessed using an index. */,
+    // "noImplicitOverride": true,                       /* Ensure overriding members in derived classes are marked with an override modifier. */
+    // "noPropertyAccessFromIndexSignature": true,       /* Enforces using indexed accessors for keys declared using an indexed type. */
+    // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
+    // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
+    /* Completeness */
+    "skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+  }
+}
+
+
+
+================================================
+FILE: .env.example
+================================================
+SERVERPORT=3001 # aka pact provider / event producer / mockoon
+
+
+================================================
+FILE: .eslintignore
+================================================
+.eslintrc.js
+wallaby.js
+
+
+
+================================================
+FILE: .eslintrc.js
+================================================
+module.exports = {
+  env: {
+    es2021: true,
+    node: true
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/typescript',
+    'plugin:import/recommended',
+    'plugin:cypress/recommended',
+    'plugin:prettier/recommended'
+  ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.jest.json']
+  },
+  plugins: [
+    '@typescript-eslint',
+    'filenames',
+    'implicit-dependencies',
+    'no-only-tests'
+  ],
+  settings: {
+    'import/resolver': {
+      typescript: {}
+    }
+  },
+  ignorePatterns: ['dist', 'node_modules', 'scripts'],
+  root: true,
+  rules: {
+    '@typescript-eslint/consistent-type-imports': 'error',
+    '@typescript-eslint/consistent-type-exports': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/await-thenable': 'error',
+    'no-only-tests/no-only-tests': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'filenames/match-regex': ['error', '^[a-z0-9-._\\[\\]]+$', true],
+    complexity: ['warn', 15],
+    'object-curly-spacing': ['error', 'always'],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'single'],
+    semi: ['error', 'never'],
+    'import/default': 'off'
+  }
+}
+
+
+
+================================================
+FILE: .npmrc
+================================================
+registry=https://registry.npmjs.org
+
+
+================================================
+FILE: .nvmrc
+================================================
+22
+
+
+================================================
+FILE: .prettierrc
+================================================
+{
+  "printWidth": 80,
+  "trailingComma": "none",
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true
+}
+
+
+
+================================================
+FILE: pw/accessibility.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
+
+test.beforeEach(({ page }) =>
+  page.goto('https://www.thetesttribe.com/my-account/edit-account/')
+)
+
+test('Scan the Complete Page', async ({ page }) => {
+  const scanResults = await new AxeBuilder({ page }).analyze()
+  expect(scanResults.violations.length).toBeGreaterThan(0)
+})
+
+test('Include and exclude', async ({ page }) => {
+  const scanResults = await new AxeBuilder({ page })
+    .include('#woocommerce-login-nonce')
+    .include('#password')
+    .include('#username')
+    .exclude('[data-id="tab1"]')
+    .analyze()
+  expect(scanResults.violations).toEqual([])
+})
+
+test('Disable Rules, Partial Page, tags', async ({ page }) => {
+  const scanResults = await new AxeBuilder({ page })
+    .include('.woocommerce')
+    .include('#customer_login')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .disableRules(['region'])
+    .analyze()
+  expect(scanResults.violations.length).toBeGreaterThan(0)
+})
+
+test('test aria snapshot', async ({ page }) => {
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - navigation "Menu":
+      - list:
+        - listitem: Community 
+        - listitem: Events 
+        - listitem: Workshops 
+        - listitem:
+          - link "Courses "
+        - listitem:
+          - link "Membership "
+        - listitem: About 
+        - listitem:
+          - link ""
+    `)
+})
+
+
+
+================================================
+FILE: pw/alert.spec.ts
+================================================
+import { test, expect, Page } from '@playwright/test'
+
+test.describe('Example to demonstrate handling the various Alert in Playwright', () => {
+  const button = (page: Page, text: string) =>
+    page.locator('p').filter({ hasText: text }).getByRole('button')
+
+  test.beforeEach(({ page }) =>
+    page.goto(
+      'https://www.lambdatest.com/selenium-playground/javascript-alert-box-demo'
+    )
+  )
+
+  test('Handling JS Alert - Standard Alert', async ({ page }) => {
+    page.on('dialog', async (dialog) => {
+      expect(await dialog.message()).toEqual('I am an alert box!')
+      await dialog.accept()
+    })
+
+    await button(page, 'JavaScript AlertsClick Me').click()
+  })
+
+  test('Confirm Alert + Cancel', async ({ page }) => {
+    page.on('dialog', async (dialog) => {
+      expect(await dialog.message()).toEqual('Press a button!')
+      await dialog.dismiss()
+    })
+
+    await button(page, 'Confirm box:Click Me').click()
+    await page.getByText('You pressed Cancel!').waitFor()
+  })
+
+  test('Confirm Alert + Ok', async ({ page }) => {
+    page.on('dialog', async (dialog) => {
+      expect(await dialog.message()).toEqual('Press a button!')
+      await dialog.accept()
+    })
+
+    await button(page, 'Confirm box:Click Me').click()
+    await page.getByText('You pressed OK!').waitFor()
+  })
+
+  test('Enter Data in Input text in prompt:', async ({ page }) => {
+    page.on('dialog', async (dialog) => {
+      expect(await dialog.message()).toEqual('Please enter your name')
+      await dialog.accept('LambdaTest')
+    })
+
+    await button(page, 'Prompt box:Click Me').click()
+    await page.getByText("You have entered 'LambdaTest' !").waitFor()
+  })
+})
+
+
+
+================================================
+FILE: pw/checkbox.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test.beforeEach(async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/checkbox-demo'
+  )
+})
+test('LambdaTest Playground Example  ', async ({ page }) => {
+  const checkbox = page.getByText('Click on check box')
+  expect(await checkbox.isChecked()).toBeFalsy()
+
+  await checkbox.click()
+  expect(await checkbox.isChecked()).toBeTruthy()
+
+  await checkbox.click()
+  expect(await checkbox.isChecked()).toBeFalsy()
+})
+
+test('Multiple Check Box Example  ', async ({ page }) => {
+  const checkbox = (n: number) => page.getByText(`Option ${n}`).first()
+
+  // with await, you can't use forEach, need to use for await of
+  // for...of loop allows you to write async/await code that executes sequential
+  for (const n of [1, 2]) {
+    expect(await checkbox(n).isChecked()).toBeFalsy()
+    await checkbox(n).check()
+    expect(await checkbox(n).isChecked()).toBeTruthy()
+  }
+})
+
+
+
+================================================
+FILE: pw/download-multiple.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+import fs from 'node:fs'
+
+test('Download Multiple files', async ({ page }) => {
+  await page.goto('https://the-internet.herokuapp.com/download')
+
+  // Select the first two file links dynamically
+  const fileLinks = await page.locator('.example a').elementHandles()
+
+  // Get the first two elements' text content
+  const filesToDownload = await Promise.all(
+    fileLinks.slice(0, 2).map((fileLink) => fileLink.textContent())
+  )
+
+  for (const fileName of filesToDownload) {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator(`text=${fileName}`).click()
+    ])
+
+    // save the file to a directory
+    const suggestedFileName = download.suggestedFilename()
+    const filePath = 'downloads/' + suggestedFileName
+    await download.saveAs(filePath)
+
+    expect(fs.existsSync(filePath)).toBeTruthy()
+  }
+})
+
+
+
+================================================
+FILE: pw/download.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+import fs from 'node:fs'
+
+test('Download a Single file ', async ({ page }) => {
+  await page.goto('https://the-internet.herokuapp.com/download')
+
+  // it is like compose order
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('text=LambdaTest.txt').click()
+  ])
+
+  // save the file to a directory
+  const fileName = download.suggestedFilename()
+  const filePath = `downloads/${fileName}`
+
+  await download.saveAs(filePath)
+  expect(await fs.existsSync(filePath)).toBeTruthy()
+
+  // check the file content
+  const fileContent = fs.readFileSync(filePath, 'utf8')
+
+  let parsedContent
+  try {
+    parsedContent = JSON.parse(fileContent)
+  } catch (err) {
+    throw new Error('Failed to parse JSON content of the file')
+  }
+
+  expect(Array.isArray(parsedContent)).toBeTruthy()
+  // Perform additional checks on the array of objects
+  expect(parsedContent.length).toBeGreaterThan(0)
+  parsedContent.forEach((item) => {
+    expect(item).toHaveProperty('_id')
+    expect(item).toHaveProperty('request')
+    expect(item.request).toHaveProperty('url')
+    expect(item).toHaveProperty('response')
+    expect(item.response).toHaveProperty('status')
+  })
+})
+
+
+
+================================================
+FILE: pw/drag-and-drop.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test.beforeEach(({ page }) =>
+  page.goto('https://www.lambdatest.com/selenium-playground/drag-and-drop-demo')
+)
+
+test('drag and drop method 1', async ({ page }) => {
+  const drag = page.locator("//span[normalize-space()='Draggable 1']")
+  const drop = page.locator('#mydropzone')
+
+  await drag.hover()
+  await page.mouse.down()
+  await drop.hover()
+  await page.mouse.up()
+
+  expect(
+    await page.locator('#droppedlist', { hasText: 'Draggable 1' })
+  ).toBeVisible()
+})
+
+test('drag and drop method 2', async ({ page }) => {
+  const dragElement = page.locator("//span[normalize-space()='Draggable 2']")
+  const dropArea = page.locator('#mydropzone')
+
+  await dragElement.dragTo(dropArea)
+
+  expect(
+    await page.locator('#droppedlist', { hasText: 'Draggable 2' })
+  ).toBeVisible()
+})
+
+
+
+================================================
+FILE: pw/dropdown.spec.ts
+================================================
+import { test } from '@playwright/test'
+
+test.beforeEach(async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/select-dropdown-demo'
+  )
+})
+
+test('LambdaTest Playground Example  ', async ({ page }) => {
+  const dropdown = page.locator('#select-demo')
+
+  await dropdown.click()
+
+  // 5 ways to select dropdown items
+
+  await dropdown.selectOption('Monday')
+
+  await dropdown.selectOption({ index: 2 })
+
+  await dropdown.selectOption({ value: 'Wednesday' })
+
+  await dropdown.selectOption({ label: 'Thursday' })
+
+  await page.selectOption('#select-demo', 'Friday')
+})
+
+test('LambdaTest Playground Example multi-select', async ({ page }) => {
+  // 2 ways to do it
+  await page.selectOption('#multi-select', ['Pennsylvania', 'Texas', 'Florida'])
+
+  await page.locator('#multi-select').selectOption(['Ohio', 'Texas', 'Florida'])
+})
+
+
+
+================================================
+FILE: pw/iframe-nested.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Nested iframe ', async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/nested-frames/'
+  )
+
+  // nested iframe
+  const bottomFrame = page.frameLocator('[name="frame-bottom"]')
+
+  const middleFrame = bottomFrame.frameLocator('[name="frame-middle"]')
+  const rightFrame = bottomFrame.frameLocator('[name="frame-right"]')
+  const leftFrame = bottomFrame.frameLocator('[name="frame-left"]')
+
+  // with nested calls, await in the beginning
+  await expect(middleFrame.locator('body')).toHaveText('Middle')
+  await expect(rightFrame.locator('body')).toHaveText('Right')
+  await expect(leftFrame.locator('body')).toHaveText('Left')
+
+  /////////////
+
+  // single iframe
+  const topFrame = page.frameLocator('[name="frame-top"]')
+
+  expect(await topFrame.locator('body')).toHaveText('Top')
+})
+
+
+
+================================================
+FILE: pw/iframe.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Iframe', async ({ page }) => {
+  await page.goto('https://www.lambdatest.com/selenium-playground/iframe-demo/')
+
+  const textArea = await page
+    .frameLocator('[src="./contant"]')
+    .locator('//div[@class="rsw-ce"]')
+  await textArea.fill('foo')
+  await expect(textArea).toHaveText('foo')
+})
+
+
+
+================================================
+FILE: pw/multi-tab.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Multi tab', async ({ context }) => {
+  const page = await context.newPage()
+  await page.goto('https://the-internet.herokuapp.com/windows')
+
+  const [newPage] = await Promise.all([
+    context.waitForEvent('page'),
+    await page.locator('//a[normalize-space()="Click Here"]').click()
+  ])
+
+  await newPage.waitForLoadState()
+  expect(await newPage.title()).toBe('New Window')
+
+  await newPage.close()
+  expect(await page.title()).toBe('The Internet')
+})
+
+
+
+================================================
+FILE: pw/multi-window.spec.ts
+================================================
+import { test, type BrowserContext } from '@playwright/test'
+
+const email1 = 'ncrmeet1@yopmail.com'
+const pw1 = 'Test@1234'
+
+const email2 = 'lambdatestnew@yopmail.com'
+const pw2 = 'Lambda123'
+
+const domain1 = 'automationexercise.com'
+const domain2 = 'ecommerce-playground.lambdatest.io'
+
+// Utility function to set cookie consent
+async function giveCookieConsent(context: BrowserContext, domainName: string) {
+  const cookies = [
+    {
+      name: 'CookieConsentClosed',
+      value: 'accepted',
+      domain: domainName,
+      path: '/',
+      expires: Math.floor(Date.now() / 1000) + 3600, // Expiration in seconds (1 hour)
+      httpOnly: false,
+      secure: true
+    }
+  ]
+  await context.addCookies(cookies)
+}
+
+test('Multi window', async ({ browser }) => {
+  // First context with cookie consent
+  const firstContext = await browser.newContext()
+  await giveCookieConsent(firstContext, domain1) // Set consent for the first domain
+  const firstPage = await firstContext.newPage()
+
+  await firstPage.goto('https://automationexercise.com/login')
+  await firstPage
+    .locator('form')
+    .filter({ hasText: 'Login' })
+    .getByPlaceholder('Email Address')
+    .fill(email1)
+  await firstPage.getByPlaceholder('Password').fill(pw1)
+  await firstPage.getByRole('button', { name: 'Login' }).click()
+
+  // Second context with cookie consent
+  const secondContext = await browser.newContext()
+  await giveCookieConsent(secondContext, domain2) // Set consent for the second domain
+  const secondPage = await secondContext.newPage()
+
+  await secondPage.goto(
+    'https://ecommerce-playground.lambdatest.io/index.php?route=account/login'
+  )
+  await secondPage.getByPlaceholder('E-Mail Address').fill(email2)
+  await secondPage.getByPlaceholder('Password').fill(pw2)
+  await secondPage.getByRole('button', { name: 'Login' }).click()
+
+  ////////
+  firstPage.bringToFront()
+  await firstPage.locator('//a[@href="/products"]').click()
+
+  // Observe pages (only in debug mode with npm run pw:open-debug)
+  await firstPage.pause()
+  await secondPage.pause()
+
+  // Clean up
+  await firstPage.close()
+  await secondPage.close()
+})
+
+
+
+================================================
+FILE: pw/radiobutton.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('LambdaTest Playground Example  ', async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/radiobutton-demo'
+  )
+
+  const radioButton = (label: string) => page.getByLabel(label).first()
+
+  await radioButton('Male').click()
+  expect(await radioButton('Male')).toBeChecked()
+
+  await radioButton('Female').click()
+  expect(await radioButton('Female')).toBeChecked()
+  expect(await radioButton('Female').isChecked()).toBeTruthy() // same thing
+
+  expect(await radioButton('Male')).not.toBeChecked()
+  expect(await radioButton('Male').isChecked()).toBeFalsy() // same thing
+})
+
+
+
+================================================
+FILE: pw/shadow-dom.spec.ts
+================================================
+import { test } from '@playwright/test'
+
+// nothing specific is needed for shadow dom
+// at most you might need something like: shadow-root-selector >> input[name="email"]
+test('Handling Shadow DOM', async ({ page }) => {
+  await page.goto('https://www.lambdatest.com/selenium-playground/shadow-dom')
+
+  await page.locator('input[name="username"]').fill('Murat')
+  await page
+    .locator('shadow-signup-form input[name="email"]')
+    .fill('test@qaautomationlabs.com')
+
+  await page.locator('input[name="password"]').fill('qa@!test')
+  await page.locator('input[name="confirm_password"]').fill('qa@!test')
+
+  await page.getByRole('button', { name: 'Submit' }).click()
+})
+
+
+
+================================================
+FILE: pw/upload.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Upload a Single file', async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/upload-file-demo'
+  )
+
+  await page.setInputFiles('//input[@id="file"]', 'uploadFile/uploadFile1.png')
+  expect(await page.locator('//div[@id="error"]')).toContainText(
+    'File Successfully Uploaded'
+  )
+})
+
+test('Upload Multiple files', async ({ page }) => {
+  await page.goto('http://blueimp.github.io/jQuery-File-Upload/')
+
+  await page.setInputFiles('input[type="file"]', [
+    'uploadFile/uploadFile1.png',
+    'uploadFile/uploadFile2.png'
+  ])
+  await expect(page.locator('p.name').nth(0)).toHaveText('uploadFile1.png')
+  await expect(page.locator('p.name').nth(1)).toHaveText('uploadFile2.png')
+})
+
+
+
+================================================
+FILE: pw/window-popup.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+const isCI = require('is-ci')
+
+test('Click on Twitter Button to open Window Based Popup ', async ({
+  page
+}) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/window-popup-modal-demo'
+  )
+  const [windowPopup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.locator("[title='Follow @Lambdatesting on Twitter']").click()
+  ])
+
+  await windowPopup.waitForLoadState()
+
+  windowPopup.close()
+  expect(await page.title()).toBe(
+    'Selenium Grid Online | Run Selenium Test On Cloud'
+  )
+})
+
+test('Click on Facebook Button to open Window Based Popup ', async ({
+  page
+}) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/window-popup-modal-demo'
+  )
+  const [windowPopup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.locator("[title='Follow @Lambdatesting on Facebook']").click()
+  ])
+  await windowPopup.waitForLoadState()
+
+  if (!isCI) expect(await windowPopup.title()).toBe('LambdaTest | Facebook')
+
+  windowPopup.close()
+  expect(await page.title()).toBe(
+    'Selenium Grid Online | Run Selenium Test On Cloud'
+  )
+})
+
+
+
+================================================
+FILE: pw/api-e2e/api-example-helper-version.spec.ts
+================================================
+// import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/all-fixtures'
+
+test.describe('API Testing', () => {
+  type UserData = {
+    id: number
+    email: string
+    first_name: string
+    last_name: string
+    avatar: string
+  }
+
+  test('GET Request To verify Response Status', async ({ apiRequest }) => {
+    const { status } = await apiRequest({
+      method: 'GET',
+      url: 'https://reqres.in/api/users/3'
+    })
+    expect(status).toBe(200)
+  })
+
+  test('GET Request With Getting User Detail And Verify it', async ({
+    apiRequest
+  }) => {
+    const {
+      status,
+      body: { data }
+    } = await apiRequest<{ data: UserData }>({
+      method: 'GET',
+      url: 'https://reqres.in/api/users/2'
+    })
+    expect(status).toBe(200)
+    expect(data.id).toBe(2)
+    expect(data.first_name).toBe('Janet')
+    expect(data.last_name).toBe('Weaver')
+    expect(data.email).toBeTruthy()
+  })
+
+  test('POST Request - Login', async ({ apiRequest }) => {
+    const { status } = await apiRequest({
+      method: 'POST',
+      url: 'https://reqres.in/api/users/login',
+      body: {
+        email: 'eve.holt@reqres.in',
+        password: 'cityslicka'
+      }
+    })
+    expect(status).toBe(201)
+  })
+
+  test('POST Request To Generate New Record In DB', async ({
+    apiRequest,
+    request
+  }) => {
+    const name = 'Murat'
+    const job = 'test architect'
+    const { body: postResponseBody } = await apiRequest<{
+      id: number
+      createdAt: Date
+      name: string
+      job: string
+    }>({
+      method: 'POST',
+      url: 'https://reqres.in/api/users/',
+      body: { name, job }
+    })
+
+    expect(postResponseBody.createdAt).toBeTruthy()
+    expect(postResponseBody.id).toBeDefined()
+    const userId = postResponseBody.id
+    expect(postResponseBody.name).toBe(name)
+    expect(postResponseBody.job).toBe(job)
+
+    // update
+    const updatedName = 'Kerem'
+    const updatedJob = 'test director'
+    const { body: updateResponseBody } = await apiRequest<{
+      id: number
+      updatedAt: Date
+      name: string
+      job: string
+    }>({
+      method: 'PUT',
+      url: 'https://reqres.in/api/users/2',
+      body: {
+        name: updatedName,
+        job: updatedJob
+      }
+    })
+
+    expect(updateResponseBody.updatedAt).toBeTruthy()
+    expect(updateResponseBody.name).toBe(updatedName)
+    expect(updateResponseBody.job).toBe(updatedJob)
+
+    // delete
+    // const deleteResponse = await request.delete(
+    //   'https://reqres.in/api/users/' + userId
+    // )
+    // expect(deleteResponse.status()).toBe(204)
+
+    const { body, status: deleteStatus } = await apiRequest({
+      method: 'DELETE',
+      url: 'https://reqres.in/api/users/' + userId
+    })
+    expect(deleteStatus).toBe(204)
+  })
+})
+
+
+
+================================================
+FILE: pw/api-e2e/api-example.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test.describe('API Testing', () => {
+  let userId
+  test('GET Request To verify Response Status', async ({ request }) => {
+    const response = await request.get('https://reqres.in/api/users/3')
+    expect(response.status()).toBe(200)
+  })
+
+  test('GET Request With Getting User Detail And Verify it', async ({
+    request
+  }) => {
+    const response = await request.get('https://reqres.in/api/users/2')
+    const responseBody = JSON.parse(await response.text())
+    expect(response.status()).toBe(200)
+    expect(responseBody.data.id).toBe(2)
+    expect(responseBody.data.first_name).toBe('Janet')
+    expect(responseBody.data.last_name).toBe('Weaver')
+    expect(responseBody.data.email).toBeTruthy()
+  })
+
+  test('POST Request - Login', async ({ request }) => {
+    const response = await request.post('https://reqres.in/api/users/login', {
+      data: {
+        email: 'eve.holt@reqres.in',
+        password: 'cityslicka'
+      }
+    })
+    expect(response.status()).toBe(201)
+  })
+
+  test('POST Request To Generate New Record In DB', async ({ request }) => {
+    const name = 'Murat'
+    const job = 'test architect'
+    const response = await request.post('https://reqres.in/api/users/', {
+      data: { name, job }
+    })
+
+    const responseBody = JSON.parse(await response.text())
+    expect(responseBody.createdAt).toBeTruthy()
+    expect(responseBody.id).toBeDefined()
+    expect(responseBody.name).toBe(name)
+    expect(responseBody.job).toBe(job)
+
+    // update
+    const updatedName = 'Kerem'
+    const updatedJob = 'test director'
+    const updateResponse = await request.put('https://reqres.in/api/users/2', {
+      data: {
+        name: updatedName,
+        job: updatedJob
+      }
+    })
+
+    const updateResponseBody = JSON.parse(await updateResponse.text())
+    expect(updateResponseBody.updatedAt).toBeTruthy()
+    expect(updateResponseBody.name).toBe(updatedName)
+    expect(updateResponseBody.job).toBe(updatedJob)
+
+    // delete
+    const deleteResponse = await request.delete(
+      'https://reqres.in/api/users/' + userId
+    )
+    expect(deleteResponse.status()).toBe(204)
+  })
+})
+
+
+
+================================================
+FILE: pw/basic/assertions.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+test(
+  'hard assertions @regression',
+  {
+    // annotation example https://playwright.dev/docs/test-annotations#annotate-tests
+    annotation: {
+      type: 'issue',
+      description: 'https://github.com/microsoft/playwright/issues/23180'
+    }
+  },
+  async ({ page }) => {
+    await page.goto(
+      'https://ecommerce-playground.lambdatest.io/index.php?route=account/register'
+    )
+    const cickPrivacyCheckbox = page.locator("//label[@for='input-agree']")
+    await cickPrivacyCheckbox.click()
+
+    //To be checked
+    await expect(cickPrivacyCheckbox).toBeChecked()
+    const firstName = page.locator("//input[@id='input-firstname']")
+
+    //To be disabled
+    await expect(firstName).not.toBeDisabled()
+    const continueBtn = page.locator("input[value='Continue']")
+
+    //To be Editable
+    await expect(firstName).toBeEditable()
+
+    //To be Enabled
+    await expect(continueBtn).toBeEnabled()
+
+    //To be Focused
+    const focus = "//input[@id='input-firstname']"
+    await page.locator(focus).focus()
+    await expect(page.locator(focus)).toBeFocused()
+
+    //To be Visible
+    await expect(
+      page.locator("aside[id='column-right'] a:nth-child(1)")
+    ).toBeVisible()
+
+    await continueBtn.click()
+
+    //To Contain Text
+    await expect(
+      page.locator(
+        "//div[contains(text(),'First Name must be between 1 and 32 characters!')]"
+      )
+    ).toContainText('First Name must be between 1 and 32 characters!')
+
+    //To Have Attribute
+    await expect(page.locator('#input-newsletter-no')).toHaveAttribute(
+      'type',
+      'radio'
+    )
+
+    //To Have Class
+    await expect(page.locator('//h1')).toHaveClass('page-title h3')
+
+    //To Have Count
+    await expect(page.locator("//input[@class='form-control']")).toHaveCount(6)
+
+    //To Have CSS
+    await expect(page.locator('#input-firstname')).toHaveCSS('display', 'block')
+
+    //To Have ID
+    await expect(page.locator("//input[@name='firstname']")).toHaveId(
+      'input-firstname'
+    )
+
+    //To Have Text
+    await expect(page.locator("label[for='input-firstname']")).toHaveText(
+      'First Name'
+    )
+
+    //To Have Value
+    await expect(page.locator('#input-newsletter-yes')).toHaveValue('1')
+
+    //To have Title
+    await expect(page).toHaveTitle('Register Account')
+
+    //To have URL
+    await expect(page).toHaveURL(/register/)
+  }
+)
+test('Soft assertion Example @foo', async ({ page }) => {
+  test.skip()
+  await page.goto(
+    'https://ecommerce-playground.lambdatest.io/index.php?route=account/register'
+  )
+  await page.locator("input[value='Continue']").click()
+  const warningMsg = page.locator(
+    "//div[contains(text(),'First Name must be between 1 and 32 characters!')]"
+  )
+
+  test.fail() // the test is expected to fail (but don't fail it)
+  await expect
+    .soft(warningMsg)
+    .toContainText('First Name must be between 1 and 33 characters!') // change to 33 and the next line still runs with soft assertion
+  await expect(page).toHaveTitle('Register Account')
+})
+
+/*
+other useful utilities / test annotations
+
+test.skip()
+
+test.fail() // the test is expected to fail (but don't fail it)
+
+test.fixme() // a better skip, letting you know to come back to the skipped test
+
+test.slow() // triples the test timeout
+
+
+
+*/
+
+
+
+================================================
+FILE: pw/basic/recorded-test-1.spec.ts
+================================================
+import { test } from '@playwright/test'
+
+test('test', async ({ page }) => {
+  await page.goto('https://qaautomationlabs.com/')
+  await page.locator('.hamburger').click()
+  await page.getByRole('link', { name: '/ About' }).click()
+  await page.locator('.hamburger').click()
+  await page.getByRole('link', { name: '/ Courses' }).click()
+  await page.getByRole('heading', { name: 'Starting with Cypress: A' }).click()
+})
+
+
+
+================================================
+FILE: pw/basic/recorded-test-2.spec.ts
+================================================
+import { test } from '@playwright/test'
+
+test('test', async ({ page }) => {
+  await page.goto('https://ecommerce-playground.lambdatest.io/')
+
+  await page.getByRole('button', { name: ' My account' }).click()
+  await page
+    .getByPlaceholder('E-Mail Address')
+    .fill('lambdatestnew@yopmail.com')
+  await page.getByPlaceholder('Password').fill('Lambda123')
+
+  await page.getByRole('button', { name: 'Login' }).click()
+  await page.getByRole('link', { name: 'Logout' }).click()
+  await page.getByRole('heading', { name: 'Account Logout' }).waitFor()
+})
+
+
+
+================================================
+FILE: pw/basic/recorded-test-3.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('test', async ({ page }) => {
+  await page.goto('https://ecommerce-playground.lambdatest.io/')
+  await page.getByRole('textbox', { name: 'Search For Products' }).fill('apple')
+  await page.getByRole('button', { name: 'Search' }).click()
+
+  await expect(page.locator('#mz-product-grid-image-34-212469')).toBeVisible()
+  await page.locator('#mz-product-grid-image-34-212469').click()
+  await expect(page.locator('h1')).toContainText('iPod Shuffle')
+})
+
+
+
+================================================
+FILE: pw/basic/search-product-desktop.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Search the text HTC Touch HD', async ({ page }) => {
+  test.skip()
+  const productName = 'HTC Touch HD'
+  await page.goto('https://ecommerce-playground.lambdatest.io/')
+
+  await page.locator('span.title', { hasText: 'Mega Menu' }).hover()
+  await page.locator('a[title=Desktop]').click()
+
+  await page
+    .locator(`div.carousel-item.active > img[title='${productName}']`)
+    .click()
+
+  await page.getByRole('button', { name: 'Add to Cart' }).click()
+
+  await page
+    .locator('a.btn.btn-primary.btn-block', { hasText: 'View Cart' })
+    .click()
+
+  await expect(
+    page.locator('td.text-left', { hasText: productName })
+  ).toBeVisible()
+  await expect(page.locator("div[class$='flex-nowrap'] > input")).toHaveValue(
+    '1'
+  )
+})
+
+
+
+================================================
+FILE: pw/basic/search-product-playground-desktop.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('LambdaTest Playground Example  ', async ({ page }) => {
+  await page.goto(
+    'https://www.lambdatest.com/selenium-playground/simple-form-demo'
+  )
+  await expect(page.getByText('Single Input Field')).toBeVisible()
+  expect(
+    await page.getByText('Single Input Field', { exact: true })
+  ).toBeVisible()
+
+  await page.getByPlaceholder('Please enter first value').fill('1')
+  await page.getByPlaceholder('Please enter second value').fill('2')
+  expect(page.getByRole('button', { name: 'Get Sum' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Get Sum' }).click()
+  expect(await page.locator('#addmessage')).toHaveText('3')
+})
+
+
+
+================================================
+FILE: pw/network/KEY_networkIdle.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test("mocks a fruit and doesn't call api", async ({ page }) => {
+  //login and reach orders page
+  await page.goto('https://rahulshettyacademy.com/client')
+  await page.locator('#userEmail').fill('anshika@gmail.com')
+  await page.locator('#userPassword').fill('Iamking@000')
+  await page.locator("[value='Login']").click()
+  await page.waitForLoadState('networkidle')
+  await page.locator('.card-body b').first().waitFor()
+
+  await page.locator("button[routerlink*='myorders']").click()
+
+  await page.route(
+    'https://rahulshettyacademy.com/api/ecom/order/get-orders-details?id=*',
+    (route) =>
+      route.fulfill({
+        // @ts-expect-error ok
+        url: 'https://rahulshettyacademy.com/api/ecom/order/get-orders-details?id=621661f88ww4b053f6765465b6'
+      })
+  )
+  await page.locator("button:has-text('View')").first().click()
+  await expect(page.locator('p').last()).toHaveText('Automation Practice')
+})
+
+
+
+================================================
+FILE: pw/network/mock-request-1.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Mock Tags Data', async ({ page }) => {
+  await page.route('https://conduit.productionready.io/api/tags', (route) =>
+    route.fulfill({
+      json: {
+        tags: ['Cypress', 'Playwright', 'Japan test community']
+      }
+    })
+  )
+
+  await page.goto('https://demo.realworld.io/')
+  await expect(page.getByText('Japan test community')).toBeVisible()
+})
+
+test('Mock Articles Data', async ({ page }) => {
+  await page.route(
+    'https://conduit.productionready.io/api/articles?limit=10&offset=0',
+    (route) =>
+      route.fulfill({
+        json: {
+          articles: [
+            {
+              title: 'Hi qaautomationlabs.com',
+              slug: 'Hi - qaautomationlabs.com',
+              body: 'qaautomationlabs',
+              createdAt: '2020-09-26T03:18:26.635Z',
+              updatedAt: '2020-09-26T03:18:26.635Z',
+              tagList: [],
+              description: 'SLASSCOM QUALITY SUMMIT 2023',
+              author: {
+                username: 'Kailash Pathak',
+                bio: null,
+                image:
+                  'https://static.productionready.io/images/smiley-cyrus.jpg',
+                following: false
+              },
+              favorited: false,
+              favoritesCount: 1000
+            }
+          ],
+          articlesCount: 500
+        }
+      })
+  )
+
+  await page.goto('https://demo.realworld.io/')
+  await expect(page.getByText('Hi qaautomationlabs.com')).toBeVisible()
+})
+
+
+
+================================================
+FILE: pw/network/mock-request-2.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test("mocks a fruit and doesn't call api", async ({ page }) => {
+  await page.route('*/**/api/v1/fruits', (route) =>
+    route.fulfill({
+      json: [
+        { name: 'Lucuma', id: 11 },
+        { name: 'Guava', id: 12 },
+        { name: 'Kiwi', id: 13 },
+        { name: 'Peach', id: 14 },
+        { name: 'Fig', id: 15 }
+      ]
+    })
+  )
+
+  await page.goto('https://demo.playwright.dev/api-mocking')
+  await expect(page.getByText('Guava')).toBeVisible()
+})
+
+
+
+================================================
+FILE: pw/network/mock-response.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+
+test('Modify API responses ', async ({ page }) => {
+  await page.route('*/**/api/v1/fruits', async (route) => {
+    // Get the response and add to it
+    const response = await route.fetch()
+    const json = await response.json()
+    json.push(
+      { name: 'Dragon fruit', id: 11 },
+      { name: 'Apple', id: 12 },
+      { name: 'Mango', id: 13 }
+    )
+    // Fulfill using the original response, while patching the response body
+    // with the given JSON object.
+    await route.fulfill({ response, json })
+  })
+
+  await page.goto('https://demo.playwright.dev/api-mocking')
+  await expect(page.getByText('Dragon fruit', { exact: true })).toBeVisible()
+})
+
+
+
+================================================
+FILE: pw/pom-examples/classic/lambda-test.spec.ts
+================================================
+import { test } from '@playwright/test'
+import { LoginPage } from './Pages/Login-Page'
+import { HomePage } from './Pages/Home-Page'
+import { SearchPage } from './Pages/Search-Page'
+import { ProductCartPage } from './Pages/Product-Cart-Page'
+
+import testData from './testData/testData.json'
+
+test('Login and Navigate to My Account', async ({ page }) => {
+  const Login = new LoginPage(page)
+  const Home = new HomePage(page)
+  const Search = new SearchPage(page)
+  const ProductCart = new ProductCartPage(page)
+
+  await page.goto(
+    'https://ecommerce-playground.lambdatest.io/index.php?route=account/login'
+  )
+
+  await Login.enterEmail(testData.data[0].email)
+  await Login.enterPassword(testData.data[0].password)
+  await Login.clickLoginButton()
+
+  // Validate user logged-in and Can Add/Delete the Product
+  await Home.verifyUserLoggedIn(testData.data[0].homePageMessage)
+  await Search.selectTheCategory()
+  await Search.searchForTheProduct(testData.data[0].searchProduct)
+  await ProductCart.addProductIntoCart(testData.data[0].addProductMessage)
+  // await ProductCart.removeProductIntoCart()
+})
+
+
+
+================================================
+FILE: pw/pom-examples/classic/talent-500.spec.ts
+================================================
+import { test } from '@playwright/test'
+import { LoginPage } from './Pages/Login-Page-Talent-500'
+
+test('Login test', async ({ page }) => {
+  const Login = new LoginPage(page)
+
+  await Login.openLoginPage()
+  await Login.loginIntoSite('applitoolsautomation@yopmail.com', 'Test@123')
+  await Login.homePageContent('Discover jobs')
+  await Login.logOutFromSite()
+  await Login.homePageContentAfterLogout('Opportunities favor the bold')
+})
+
+
+
+================================================
+FILE: pw/pom-examples/classic/Pages/Home-Page.ts
+================================================
+import type { Page, Locator } from '@playwright/test'
+import { expect } from '@playwright/test'
+
+export class HomePage {
+  constructor(
+    private page: Page,
+    public myAccountLink: Locator = page.locator('text=My Account')
+  ) {}
+
+  async verifyUserLoggedIn(content: string) {
+    const homePageTextAfterLogin = await this.page
+      .getByText('Change your password')
+      .textContent()
+    expect(homePageTextAfterLogin).toContain(content)
+  }
+}
+
+
+
+================================================
+FILE: pw/pom-examples/classic/Pages/Login-Page-Talent-500.ts
+================================================
+import { expect } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+export class LoginPage {
+  constructor(
+    private page: Page,
+    public usernameField = page.getByPlaceholder('Email'),
+    public passwordField = page.getByPlaceholder('Password'),
+    public loginButton = page.locator('[data-id="submit-login-btn"]'),
+    public dropDown = page.locator('[alt="DropDown Button"]'),
+    public logOut = page.locator('[data-id="nav-dropdown-logout"]')
+  ) {}
+  openLoginPage = () => this.page.goto('https://talent500.co/auth/signin')
+
+  async loginIntoSite(username: string, password: string) {
+    await this.usernameField.fill(username)
+    await this.passwordField.fill(password)
+    await this.loginButton.click()
+  }
+
+  async homePageContent(content: string) {
+    const text = await this.page
+      .locator('//a[contains(text(),"Discover jobs")]')
+      .textContent()
+    expect(text).toContain(content)
+  }
+
+  async logOutFromSite() {
+    await this.dropDown.click()
+    await this.logOut.click()
+  }
+
+  async homePageContentAfterLogout(content: string) {
+    const homePageTextAfterLogout = await this.page
+      .locator('//h2[normalize-space()="Opportunities favor the bold"]')
+      .textContent()
+    expect(homePageTextAfterLogout).toContain(content)
+  }
+}
+
+
+
+================================================
+FILE: pw/pom-examples/classic/Pages/Login-Page.ts
+================================================
+import type { Page } from '@playwright/test'
+
+export class LoginPage {
+  constructor(
+    private page: Page,
+    public emailInput = page.locator('#input-email'),
+    public passwordInput = page.locator('#input-password'),
+    public loginButton = page.locator('//input[@value="Login"]')
+  ) {}
+
+  async enterEmail(email) {
+    await this.emailInput.fill(email)
+  }
+  async enterPassword(password) {
+    await this.passwordInput.fill(password)
+  }
+  async clickLoginButton() {
+    await this.loginButton.click()
+  }
+}
+
+
+
+================================================
+FILE: pw/pom-examples/classic/Pages/Product-Cart-Page.ts
+================================================
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
+
+export class ProductCartPage {
+  constructor(
+    private page: Page,
+    public hover = page.locator('.lazy-load'),
+    public clickFirstElement = page.locator('.product-action > button'),
+    public viewCart = page.locator('text=View Cart'),
+    public addedProduct = page.locator('#content >> text=iPod Touch'),
+    public cartPopup = page.locator('div[role="alert"]'),
+    public removeProduct = page
+      .locator('//button[@class="btn btn-danger"]')
+      .first(),
+    public message = page.locator(
+      '(//p[contains(text(),"Your shopping cart is empty!")])[2]'
+    )
+  ) {}
+
+  async addProductIntoCart(message: string) {
+    await this.hover.first().hover()
+    await this.clickFirstElement.first().click()
+    await expect(this.cartPopup).toContainText(message)
+    await this.viewCart.click()
+    await expect(this.page.url()).toContain('route=checkout/cart')
+  }
+
+  async removeProductIntoCart() {
+    await this.removeProduct.click()
+    await expect(this.message).toBeVisible()
+  }
+}
+
+
+
+================================================
+FILE: pw/pom-examples/classic/Pages/Search-Page.ts
+================================================
+import type { Page } from '@playwright/test'
+
+export class SearchPage {
+  constructor(
+    private page: Page,
+    public categoryAllCategories = page.locator(
+      '#entry_217822 button:has-text("All Categories")'
+    ),
+    public categorySoftware = page.locator('#entry_217822 >> text=Software'),
+    public searchField = page.getByRole('textbox', {
+      name: 'Search For Products'
+    }),
+    public searchButton = page.locator('text=Search'),
+    public hover = page.locator('.lazy-load')
+  ) {}
+
+  async selectTheCategory() {
+    await this.categoryAllCategories.click()
+    await this.categorySoftware.click()
+  }
+
+  async searchForTheProduct(product) {
+    await this.searchField.fill(product)
+    await this.searchButton.click()
+  }
+}
+
+
+
+================================================
+FILE: pw/pom-examples/classic/testData/testData.json
+================================================
+{
+  "data": [
+    {
+      "email": "lambdatestnew@yopmail.com",
+      "password": "Lambda123",
+      "homePageMessage": "Change your password",
+      "searchProduct": "iPod",
+      "addProductMessage": "Success: You have added iPod Touch to your shopping cart!"
+    }
+  ]
+}
+
+
+
+================================================
+FILE: pw/pom-examples/pw-fixture-version/lambda-test.spec.ts
+================================================
+import { test } from '../../support/all-fixtures'
+import testData from '../classic/testData/testData.json'
+
+test('Login and Navigate to My Account', async ({
+  LoginPage,
+  HomePage,
+  ProductCartPage,
+  SearchPage,
+  page
+}) => {
+  await page.goto(
+    'https://ecommerce-playground.lambdatest.io/index.php?route=account/login'
+  )
+
+  await LoginPage.enterEmail(testData.data[0].email)
+  await LoginPage.enterPassword(testData.data[0].password)
+  await LoginPage.clickLoginButton()
+
+  // Validate user logged-in and Can Add/Delete the Product
+  await HomePage.verifyUserLoggedIn(testData.data[0].homePageMessage)
+  await SearchPage.selectTheCategory()
+  await SearchPage.searchForTheProduct(testData.data[0].searchProduct)
+  await ProductCartPage.addProductIntoCart(testData.data[0].addProductMessage)
+  await ProductCartPage.removeProductIntoCart()
+})
+
+
+
+================================================
+FILE: pw/pom-examples/pw-fixture-version/talent-500.spec.ts
+================================================
+import { test } from '../../support/fixtures/talent-fixture'
+
+test('Login test', async ({ LoginPage }) => {
+  await LoginPage.openLoginPage()
+  await LoginPage.loginIntoSite('applitoolsautomation@yopmail.com', 'Test@123')
+  await LoginPage.homePageContent('Discover jobs')
+  await LoginPage.logOutFromSite()
+  await LoginPage.homePageContentAfterLogout('Opportunities favor the bold')
+})
+
+
+
+================================================
+FILE: pw/support/all-fixtures.ts
+================================================
+import { test as base, mergeTests } from '@playwright/test'
+import { test as lambdaFixture } from './fixtures/lambda-fixture'
+import { test as apiRequestFixture } from './fixtures/api-request-fixture'
+
+const test = mergeTests(base, lambdaFixture, apiRequestFixture)
+
+const expect = base.expect
+export { test, expect }
+
+
+
+================================================
+FILE: pw/support/fixture-helpers/plain-functions.ts
+================================================
+import type { APIRequestContext, APIResponse } from '@playwright/test'
+
+/**
+ * Simplified helper for making API requests and returning the status and JSON body.
+ * This helper automatically performs the request based on the provided method, URL, body, and headers.
+ *
+ * @param {Object} params - The parameters for the request.
+ * @param {APIRequestContext} params.request - The Playwright request object, used to make the HTTP request.
+ * @param {string} params.method - The HTTP method to use (POST, GET, PUT, DELETE).
+ * @param {string} params.url - The URL to send the request to.
+ * @param {string} [params.baseUrl] - The base URL to prepend to the request URL.
+ * @param {Record<string, unknown> | null} [params.body=null] - The body to send with the request (for POST and PUT requests).
+ * @param {Record<string, string> | undefined} [params.headers=undefined] - The headers to include with the request.
+ * @returns {Promise<{ status: number; body: unknown }>} - An object containing the status code and the parsed response body.
+ *    - `status`: The HTTP status code returned by the server.
+ *    - `body`: The parsed JSON response body from the server.
+ */
+export async function apiRequest({
+  request,
+  method,
+  url,
+  baseUrl,
+  body = null,
+  headers
+}: {
+  request: APIRequestContext
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}): Promise<{ status: number; body: unknown }> {
+  let response: APIResponse
+
+  // Common request options
+  const options: {
+    data?: Record<string, unknown> | null
+    headers?: Record<string, string>
+  } = {}
+  if (body) options.data = body
+  if (headers) options.headers = headers
+
+  // Construct full URL
+  const fullUrl = baseUrl ? `${baseUrl}${url}` : url
+
+  // Make the request based on the method
+  switch (method.toUpperCase()) {
+    case 'POST':
+      response = await request.post(fullUrl, options)
+      break
+    case 'GET':
+      response = await request.get(fullUrl, { headers })
+      break
+    case 'PUT':
+      response = await request.put(fullUrl, options)
+      break
+    case 'DELETE':
+      response = await request.delete(fullUrl, { headers })
+      break
+    default:
+      throw new Error(`Unsupported HTTP method: ${method}`)
+  }
+
+  const status = response.status()
+
+  // Determine how to parse the response body
+  let bodyData: unknown = null
+  const contentType = response.headers()['content-type'] || ''
+
+  try {
+    if (contentType.includes('application/json')) {
+      bodyData = await response.json()
+    } else if (contentType.includes('text/')) {
+      bodyData = await response.text()
+    }
+  } catch (err) {
+    console.warn(`Failed to parse response body for status ${status}: ${err}`)
+  }
+
+  return { status, body: bodyData }
+}
+
+
+
+================================================
+FILE: pw/support/fixtures/api-request-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import { apiRequest as apiRequestFunction } from '../fixture-helpers/plain-functions'
+
+type ApiRequestParams = {
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE'
+  url: string
+  baseUrl?: string
+  body?: Record<string, unknown> | null
+  headers?: Record<string, string>
+}
+
+export type ApiRequestResponse<T = unknown> = {
+  status: number
+  body: T
+}
+
+export const test = base.extend<{
+  apiRequest: <T = unknown>(
+    params: ApiRequestParams
+  ) => Promise<ApiRequestResponse<T>>
+}>({
+  apiRequest: async ({ request }, use) => {
+    const apiRequest = async <T = unknown>({
+      method,
+      url,
+      baseUrl,
+      body = null,
+      headers
+    }: ApiRequestParams): Promise<ApiRequestResponse<T>> => {
+      const response = await apiRequestFunction({
+        request,
+        method,
+        url,
+        baseUrl,
+        body,
+        headers
+      })
+
+      return {
+        status: response.status,
+        body: response.body as T
+      }
+    }
+
+    await use(apiRequest)
+  }
+})
+
+
+
+================================================
+FILE: pw/support/fixtures/lambda-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import { ProductCartPage } from '../../pom-examples/classic/Pages/Product-Cart-Page'
+import { HomePage } from '../../pom-examples/classic/Pages/Home-Page'
+import { LoginPage } from '../../pom-examples/classic/Pages/Login-Page'
+import { SearchPage } from '../../pom-examples/classic/Pages/Search-Page'
+export { expect } from '@playwright/test'
+
+type Methods = {
+  HomePage: HomePage
+  LoginPage: LoginPage
+  ProductCartPage: ProductCartPage
+  SearchPage: SearchPage
+}
+
+export const test = base.extend<Methods>({
+  HomePage: async ({ page }, use) => {
+    const homePageFn = new HomePage(page)
+    await use(homePageFn)
+  },
+
+  LoginPage: async ({ page }, use) => {
+    const loginPageFn = new LoginPage(page)
+    await use(loginPageFn)
+  },
+
+  ProductCartPage: async ({ page }, use) => {
+    const productCartPageFn = new ProductCartPage(page)
+    await use(productCartPageFn)
+  },
+
+  SearchPage: async ({ page }, use) => {
+    const searchPageFn = new SearchPage(page)
+    await use(searchPageFn)
+  }
+})
+
+
+
+================================================
+FILE: pw/support/fixtures/talent-fixture.ts
+================================================
+import { test as base } from '@playwright/test'
+import { LoginPage } from '../../pom-examples/classic/Pages/Login-Page-Talent-500'
+
+type Methods = {
+  LoginPage: LoginPage
+}
+
+export const test = base.extend<Methods>({
+  LoginPage: async ({ page }, use) => {
+    const loginPageFn = new LoginPage(page)
+    await use(loginPageFn)
+  }
+})
+
+export { expect } from '@playwright/test'
+
+
+
+================================================
+FILE: pw/visual-testing/example.spec.ts
+================================================
+import { test, expect } from '@playwright/test'
+import isCi from 'is-ci'
+
+// restrict to 1 browser, and consistent viewport
+test.use({ browserName: 'chromium', viewport: { width: 1280, height: 720 } })
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('https://playwright.dev/')
+})
+
+test('Take visual screenshot', async ({ page }) => {
+  if (isCi) test.skip() // this is impossible to pass in CI
+
+  // Targeting subsection of the page, full page will rarely match
+  // const element = page.locator('.hero__title')
+
+  // we can check th whole page, but it becomes a headache in CI
+  await expect(page).toHaveScreenshot({
+    mask: [page.getByText('Get started')],
+    // in CI, it is a headache to get things right, I guess that's why u get AI services for visual testing...
+    fullPage: true, // full page will rarely match...
+    // these can go to the config file so that they apply to every test
+    // https://playwright.dev/docs/test-configuration#expect-options
+    maxDiffPixelRatio: 0.2, // Allow up to 20% of pixels to differ
+    maxDiffPixels: 500 // Allow up to 500 pixels to differ
+    // stylePath: './styles/normalize.css' // Apply shared styles
+  })
+})
+
+
+
+================================================
+FILE: src/sanity.test.ts
+================================================
+describe('sanity', () => {
+  it('should pass', () => {
+    expect(true).toBe(true)
+  })
+})
+
+
+
+================================================
+FILE: .github/workflows/burn-in-reusable.yml
+================================================
+name: 'Detect-and-Burn-in Reusable'
+
+on:
+  workflow_call:
+    outputs:
+      runE2E:
+        description: 'Whether to run E2E tests'
+        value: ${{ jobs.detect-changes.outputs.runE2E }}
+    inputs:
+      base-ref:
+        type: string
+        description: 'Base ref to compare changed files with HEAD'
+        default: 'main'
+      test-directory:
+        type: string
+        description: 'Directory containing test files'
+        default: 'pw/'
+      test-pattern:
+        type: string
+        description: 'Regex pattern to match test files'
+        default: '.*\.(spec|test)\.ts'
+      repeat-count:
+        type: number
+        description: 'Number of times to repeat each test'
+        default: 10
+      retry-count:
+        type: number
+        description: 'Number of test retries - recommended number is 0'
+        default: 0
+      install-command:
+        type: string
+        description: 'Dependency install command'
+        default: 'npm ci'
+      playwright-browsers:
+        type: string
+        description: 'Browsers to install (comma-separated)'
+        default: 'chromium'
+      test-command:
+        type: string
+        description: 'Command to run tests'
+        default: 'npx playwright test'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      runE2E: ${{ steps.set-runE2E.outputs.runE2E }}
+      shouldBurnIn: ${{ steps.detect-changed.outputs.shouldBurnIn }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }} # ensure we're checking out the correct commit
+
+      - name: Detect changed E2E test files
+        id: detect-changed
+        run: |
+          # Fetch base branch explicitly
+          git remote set-branches --add origin ${{ inputs.base-ref }}
+          git fetch origin ${{ inputs.base-ref }}
+          changed_files=$(git diff --name-only origin/${{ inputs.base-ref }} HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          if echo "$changed_files" | grep -Eq '^${{ inputs.test-directory }}.*${{ inputs.test-pattern }}'; then
+            echo "shouldBurnIn=true" >> $GITHUB_OUTPUT
+            echo "Found test file changes => will run burn-in"
+          else
+            echo "shouldBurnIn=false" >> $GITHUB_OUTPUT
+            echo "No test file changes => will skip burn-in"
+          fi
+
+      - name: Set runE2E output
+        id: set-runE2E
+        run: |
+          if [ "${{ steps.detect-changed.outputs.shouldBurnIn }}" = "false" ]; then
+            echo "runE2E=true" >> $GITHUB_OUTPUT
+            echo "No E2E test files changed => skipping burn-in, but E2E can still proceed."
+          else
+            echo "runE2E=true" >> $GITHUB_OUTPUT
+            echo "Test files changed => will run burn-in, E2E depends on its outcome"
+          fi
+
+  burn-in-rwf:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.shouldBurnIn == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Read Node version from .nvmrc
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: ${{ inputs.install-command }}
+
+      - name: Install Playwright browser(s) ${{ inputs.playwright-browsers }}
+        run: npx playwright install ${{ inputs.playwright-browsers }}
+
+      - name: Run Burn-in
+        id: burn-in-step
+        run: |
+          git branch -f ${{ inputs.base-ref }} origin/${{ inputs.base-ref }}
+          ${{ inputs.test-command }} \
+            --only-changed=${{ inputs.base-ref }} \
+            --repeat-each=${{ inputs.repeat-count }} \
+            --retries=${{ inputs.retry-count }} \
+        env:
+          PW_MULTI_BROWSER: true
+
+      - name: Update runE2E based on burn-in result
+        if: always()
+        run: |
+          if [ "${{ steps.burn-in-step.outcome }}" = "success" ]; then
+            echo "runE2E=true" >> $GITHUB_OUTPUT
+            echo "Burn-in passed => E2E can proceed"
+          else
+            echo "runE2E=false" >> $GITHUB_OUTPUT
+            echo "Burn-in failed => E2E will be skipped"
+          fi
+
+
+
+================================================
+FILE: .github/workflows/merge-gatekeeper.yml
+================================================
+name: Merge Gatekeeper
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  merge-gatekeeper:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Run Merge Gatekeeper
+        uses: upsidr/merge-gatekeeper@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+================================================
+FILE: .github/workflows/pr-checks.yml
+================================================
+name: Run PR checks
+on:
+  pull_request:
+  workflow_dispatch:
+
+# if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.ref }} && ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run lint
+        run: npm run lint
+
+
+
+================================================
+FILE: .github/workflows/pw-e2e.yml
+================================================
+name: Run e2e with pw
+
+on:
+  push:
+  workflow_dispatch:
+
+  # if this branch is pushed back to back, cancel the older branch's workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Skip burn-in if no test files changed, but still run e2e
+# Run e2e if burn-in passes
+# Skip e2e if burn-in fails
+
+jobs:
+  burn-in:
+    uses: ./.github/workflows/burn-in-reusable.yml
+
+  pw-e2e:
+    needs: burn-in
+    if: needs.burn-in.outputs.runE2E == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug Output
+        run: |
+          echo "runE2E value: ${{ needs.burn-in.outputs.runE2E }}"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Read Node version from .nvmrc
+        id: node_version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium Only
+        run: npx playwright install chromium
+
+      - name: Run PW e2e tests (sharded)
+        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+
+      - name: Copy trace files to blob-report
+        run: |
+          mkdir -p blob-report/trace
+          cp -r test-results/**/*.zip blob-report/trace || true
+
+      - name: Upload shard blob report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report
+          retention-days: 3
+
+  merge-reports:
+    needs: [pw-e2e]
+    # even if the previous jobs in the needs: list failed, still run this job
+    if: always() && needs.burn-in.outputs.runE2E == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download shard reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        run: |
+          mkdir -p playwright-report/trace
+          cp -r all-blob-reports/*/trace/* playwright-report/trace || true
+          npx playwright merge-reports --reporter=html all-blob-reports
+
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 3
+
+
